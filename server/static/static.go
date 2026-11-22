@@ -52,10 +52,12 @@ var signedOutPaths = map[string]bool{
 }
 
 // Go's built-in MIME table has no web fonts, and the OS one it consults (if
-// any) varies by machine. The vendored icon font needs these.
+// any) varies by machine. The vendored icon font needs these, and the app
+// manifest its own type.
 func init() {
 	mime.AddExtensionType( ".woff2" , "font/woff2" )
 	mime.AddExtensionType( ".woff" , "font/woff" )
+	mime.AddExtensionType( ".webmanifest" , "application/manifest+json" )
 }
 
 type Server struct {

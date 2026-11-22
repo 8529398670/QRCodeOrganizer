@@ -4,6 +4,7 @@
 const Container = {
   label: null,
   aiReady: false,
+  aiService: "",
   polling: null,
 
   init() {
@@ -24,6 +25,7 @@ const Container = {
       const [ label , ai ] = await Promise.all( [ Org.get( "/labels/" + id ) , Api.request( "/api/ai" ) ] );
       this.label = label;
       this.aiReady = ai.ready;
+      this.aiService = ai.provider_name || "";
       Dom.text( Dom.get( "container-title" ) , label.name );
       Dom.text( Dom.get( "container-path" ) , [ Org.current.name , label.path ].join( " › " ) );
       const heading = document.querySelector( '.view[data-view="container"] h2' );
@@ -276,8 +278,9 @@ const Container = {
 
   async extract( label , file ) {
     const holder = Dom.get( "container-ai" );
+    const service = this.aiService || I18n.get( "container.ai_reading_service" );
     const say = ( key ) => Dom.swap( holder , Dom.el( "div" , { class: "alert alert-info d-flex align-items-center gap-2" , children: [
-      Dom.el( "span" , { class: "spinner-border spinner-border-sm" , attrs: { "aria-hidden": "true" } } ) , Dom.el( "span" , { text: I18n.get( key ) } ) ,
+      Dom.el( "span" , { class: "spinner-border spinner-border-sm" , attrs: { "aria-hidden": "true" } } ) , Dom.el( "span" , { text: I18n.get( key ).replace( "{service}" , service ) } ) ,
     ] } ) );
     try {
       say( "container.ai_uploading" );

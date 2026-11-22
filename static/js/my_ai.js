@@ -5,8 +5,10 @@
 const MyAi = {
   state: null,
   form: null,
+  owner: false,
 
   init( me ) {
+    this.owner = !!me.is_owner;
     Dom.show( Dom.get( "my-ai-panel" ) , true );
     this.form = new AiForm( "my-ai" , "/api/account/ai" , ( state ) => this.paint( state ) );
     Dom.onSubmit( Dom.get( "my-ai-form" ) , ( event ) => this.save( event ) );
@@ -37,6 +39,9 @@ const MyAi = {
     else text = I18n.get( "my_ai.state_none" );
     Dom.text( Dom.get( "my-ai-state" ) , text );
     Dom.show( Dom.get( "my-ai-remove" ) , state.own_key_set );
+    let scope = I18n.get( "my_ai.scope" ) + " ";
+    scope += state.key_set ? I18n.get( "my_ai.scope_server" ).replace( "{service}" , AiForm.providerName( state.server_provider , state ) ) : I18n.get( "my_ai.scope_server_none" );
+    AiForm.scope( Dom.get( "my-ai-scope" ) , scope , this.owner ? I18n.get( "my_ai.scope_owner_link" ) : "" , "/admin/settings/ai" );
   },
 
   async save( event ) {
@@ -65,6 +70,7 @@ const MyAi = {
       Undo.saved( Dom.get( "my-ai-form" ) );
       if ( toastKey ) Dom.toast( I18n.get( toastKey ) , "ok" );
       AiForm.warn( state );
+      if ( AiKey.form ) AiKey.paintScope();
     } catch ( error ) { App.showError( error.message ); }
   },
 };

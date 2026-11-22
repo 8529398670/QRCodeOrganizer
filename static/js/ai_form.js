@@ -130,4 +130,16 @@ class AiForm {
   static warn( state ) {
     if ( state && state.models_error ) App.showError( I18n.get( "ai_form.list_failed" ).replace( "{error}" , state.models_error ) );
   }
+
+  // scope fills a card's "whose key is this" note: what the key is used for,
+  // and a link to the other card when that is the one someone may have meant.
+  static scope( holder , text , link , href ) {
+    const body = Dom.el( "div" , { children: [ Dom.el( "span" , { text: text } ) ] } );
+    if ( link ) {
+      body.appendChild( document.createTextNode( " " ) );
+      body.appendChild( Dom.el( "a" , { class: "alert-link" , text: link , attrs: { href: href } } ) );
+    }
+    Dom.swap( holder , Dom.el( "i" , { class: "bi bi-info-circle" , attrs: { "aria-hidden": "true" } } ) , body );
+    Dom.show( holder , true );
+  }
 }

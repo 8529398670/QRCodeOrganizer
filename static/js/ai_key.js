@@ -27,6 +27,21 @@ const AiKey = {
       this.form.paint( state , state.provider , state.chosen_model , state.chosen_effort );
       this.paint( state );
     } catch ( error ) { /* the rest of Settings works without this */ }
+    this.paintScope();
+  },
+
+  // Whose photos this key reads; the owner's own Account key, when set,
+  // wins for their photos, so say so here where they might expect otherwise.
+  async paintScope() {
+    let text = I18n.get( "ai.scope" ) , link = "";
+    try {
+      const mine = await Api.request( "/api/account/ai" );
+      if ( mine.own_key_set ) {
+        text += " " + I18n.get( "ai.scope_own" ).replace( "{service}" , AiForm.providerName( mine.own_provider , mine ) );
+        link = I18n.get( "ai.scope_own_link" );
+      }
+    } catch ( error ) { /* the note still says what this key is for */ }
+    AiForm.scope( Dom.get( "ai-key-scope" ) , text , link , "/account/ai" );
   },
 
   paint( state ) {
@@ -52,6 +67,7 @@ const AiKey = {
       Undo.saved( Dom.get( "ai-key-form" ) );
       Dom.toast( I18n.get( toastKey ) , "ok" );
       AiForm.warn( state );
+      if ( MyAi.form ) MyAi.refresh();
     } catch ( error ) { Org.failed( error ); }
   },
 };
