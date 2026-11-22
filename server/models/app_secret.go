@@ -1,76 +1,157 @@
 package models
 
-// The Anthropic API key for Smart Photo Extraction. The owner sets it from the
-// Settings screen rather than in config.yaml, which holds no secrets and is
-// read-only to the app inside the container. It is sealed on its own with a
+// The AI keys for Smart Photo Extraction: the server's, which the owner sets
+// on the Settings screen, and each person's own, set on their Account screen.
+// config.yaml holds no secrets and is read-only to the app inside the
+// container, so keys live here instead. Each is sealed on its own with a
 // subkey of secret.key (like a TOTP secret), so it stays secret even with
 // server.encrypt_at_rest off, and rekey.go carries it across a rotation.
-// Nothing ever hands it back: the screen only learns whether one is set.
+// Nothing ever hands a key back: the screens only learn whether one is set.
+//
+// A key belongs to one service (catalog.Providers): Anthropic, OpenAI,
+// Gemini, xAI or OpenRouter. Records from before there was a choice have no
+// provider, which means Anthropic.
 
 import (
 	errors "errors"
+	fmt "fmt"
 	strconv "strconv"
 	strings "strings"
 	time "time"
 
+	catalog "qrcodeorganizer/server/ai/catalog"
 	db "qrcodeorganizer/server/db"
 	encryption "qrcodeorganizer/server/encryption"
 )
 
 var aiSecretKey = []byte( "ai" )
 
-var ErrBadAPIKey = errors.New( "that does not look like an Anthropic API key" )
+var (
+	ErrBadAPIKey   = catalog.ErrBadKey
+	ErrBadModel    = catalog.ErrBadModel
+	ErrBadEffort   = catalog.ErrBadEffort
+	ErrBadProvider = catalog.ErrBadProvider
+	ErrNeedKey     = errors.New( "a key belongs to one service: enter a key for the service you picked" )
+	ErrBadAccess   = errors.New( "access must be default, shared or own" )
+)
 
-type AppSecrets struct {
-	AnthropicKey string     `json:"anthropic_key,omitempty"`
-	SetAt        *time.Time `json:"set_at,omitempty"`
-	SetBy        uint64     `json:"set_by,omitempty"`
-	// Last4 is shown on the Settings screen so the owner can tell keys apart.
+// AISettings is one key and the choices that go with it: the server's, or
+// one person's. The sealed key keeps its old field name, anthropic_key, so
+// keys stored before other services existed still open, and rekey.go finds
+// them all under one name.
+type AISettings struct {
+	Key      string     `json:"anthropic_key,omitempty"`
+	Provider string     `json:"provider,omitempty"`
+	Model    string     `json:"model,omitempty"`
+	Effort   string     `json:"effort,omitempty"`
+	SetAt    *time.Time `json:"set_at,omitempty"`
+	SetBy    uint64     `json:"set_by,omitempty"`
+	// Last4 is shown so keys can be told apart.
 	Last4 string `json:"last4,omitempty"`
 }
 
-// SetAnthropicKey stores the key, or (empty) removes it.
-func SetAnthropicKey( store *db.Store , secret_key string , api_key string , user_id uint64 ) ( err error ) {
-	api_key = strings.TrimSpace( api_key )
-	if api_key == "" {
-		err = store.Delete( db.BucketAppSecrets , aiSecretKey )
-		return
-	}
-	if looksLikeAnthropicKey( api_key ) == false {
-		err = ErrBadAPIKey
-		return
-	}
-	sealed , err := encryption.ChaChaEncryptString( encryption.SubKey( secret_key , encryption.PurposeAI ) , api_key )
-	if err != nil { return }
-	now := time.Now().UTC()
-	err = store.Put( db.BucketAppSecrets , aiSecretKey , AppSecrets{ AnthropicKey: sealed , SetAt: &now , SetBy: user_id , Last4: api_key[ len( api_key ) - 4: ] } )
+// KeySet is whether a key is stored.
+func ( settings *AISettings ) KeySet() ( set bool ) {
+	set = settings.Key != ""
 	return
 }
 
-// AnthropicKey is the stored key, or "" when none is set.
-func AnthropicKey( store *db.Store , secret_key string ) ( api_key string , err error ) {
-	secrets := &AppSecrets{}
-	if get_err := store.Get( db.BucketAppSecrets , aiSecretKey , secrets ); get_err != nil || secrets.AnthropicKey == "" { return }
-	api_key , err = encryption.ChaChaDecryptBase64String( encryption.SubKey( secret_key , encryption.PurposeAI ) , secrets.AnthropicKey )
+// Service is the provider id, "" read as Anthropic.
+func ( settings *AISettings ) Service() ( provider string ) {
+	provider = catalog.Normal( settings.Provider )
 	return
 }
 
-// AnthropicKeyInfo is what the Settings screen may know about the key.
-func AnthropicKeyInfo( store *db.Store ) ( set bool , last4 string , set_at *time.Time ) {
-	secrets := &AppSecrets{}
-	if store.Get( db.BucketAppSecrets , aiSecretKey , secrets ) != nil || secrets.AnthropicKey == "" { return }
-	set , last4 , set_at = true , secrets.Last4 , secrets.SetAt
+// AIChange is what one save changes. A nil field is left as it is.
+type AIChange struct {
+	Provider  *string
+	APIKey    *string
+	RemoveKey bool
+	Model     *string
+	Effort    *string
+}
+
+// apply changes settings in place. Picking another service needs a key for
+// it, unless there is no key to begin with; the old model and effort belong
+// to the old service and are dropped, unless this save names new ones.
+func ( settings *AISettings ) apply( secret_key string , user_id uint64 , change AIChange ) ( err error ) {
+	provider , _ := catalog.Lookup( settings.Provider )
+	new_key := ""
+	if change.APIKey != nil { new_key = strings.TrimSpace( *change.APIKey ) }
+	if change.Provider != nil && catalog.Normal( *change.Provider ) != provider.ID {
+		next , ok := catalog.Lookup( *change.Provider )
+		if ok == false {
+			err = ErrBadProvider
+			return
+		}
+		if settings.KeySet() && new_key == "" && change.RemoveKey == false {
+			err = fmt.Errorf( "%w (the one saved is for %s)" , ErrNeedKey , provider.Name )
+			return
+		}
+		provider = next
+		settings.Model , settings.Effort = "" , ""
+	}
+	if change.Model != nil {
+		if err = catalog.CheckModel( strings.TrimSpace( *change.Model ) ); err != nil { return }
+		settings.Model = strings.TrimSpace( *change.Model )
+	}
+	if change.Effort != nil {
+		if err = provider.CheckEffort( *change.Effort ); err != nil { return }
+		settings.Effort = *change.Effort
+	}
+	if change.RemoveKey {
+		settings.Key , settings.Last4 , settings.SetAt , settings.SetBy = "" , "" , nil , 0
+	} else if new_key != "" {
+		if err = provider.CheckKey( new_key ); err != nil { return }
+		sealed , seal_err := encryption.ChaChaEncryptString( encryption.SubKey( secret_key , encryption.PurposeAI ) , new_key )
+		if seal_err != nil {
+			err = seal_err
+			return
+		}
+		now := time.Now().UTC()
+		settings.Key , settings.Last4 , settings.SetAt , settings.SetBy = sealed , new_key[ len( new_key ) - 4: ] , &now , user_id
+	}
+	settings.Provider = provider.ID
+	return
+}
+
+func ( settings *AISettings ) open( secret_key string ) ( api_key string , err error ) {
+	if settings.Key == "" { return }
+	api_key , err = encryption.ChaChaDecryptBase64String( encryption.SubKey( secret_key , encryption.PurposeAI ) , settings.Key )
+	return
+}
+
+// ---- The server's key ----------------------------------------------------
+
+// ServerAI is the server's key and choices (the key still sealed).
+func ServerAI( store *db.Store ) ( settings *AISettings ) {
+	settings = &AISettings{}
+	if store.Get( db.BucketAppSecrets , aiSecretKey , settings ) != nil { settings = &AISettings{} }
+	return
+}
+
+// ServerAPIKey is the server's key, opened, or "" when none is set.
+func ServerAPIKey( store *db.Store , secret_key string ) ( api_key string , err error ) {
+	api_key , err = ServerAI( store ).open( secret_key )
+	return
+}
+
+// SetServerAI changes the server's key and choices.
+func SetServerAI( store *db.Store , secret_key string , user_id uint64 , change AIChange ) ( settings *AISettings , err error ) {
+	settings = ServerAI( store )
+	if err = settings.apply( secret_key , user_id , change ); err != nil { return }
+	err = store.Put( db.BucketAppSecrets , aiSecretKey , settings )
 	return
 }
 
 // ---- Each person's own key, and who may use the server's ----------------
 //
-// Anyone can add their own Anthropic key on their Account screen, with the
-// model and effort they want; their photos then go on their own bill. Whether
-// someone without one may use the server's key (the owner's bill) is the
-// admins' call: a default for everyone, and a choice per person. Own keys are
-// in the same bucket under "user:<id>", in the same anthropic_key field, so
-// rekey.go carries them across a rotation too.
+// Anyone can add their own key on their Account screen, for the service,
+// model and effort they want; their photos then go on their own bill.
+// Whether someone without one may use the server's key (the owner's bill) is
+// the admins' call: a default for everyone, and a choice per person. Own keys
+// are in the same bucket under "user:<id>", in the same anthropic_key field,
+// so rekey.go carries them across a rotation too.
 
 const (
 	AIAccessDefault = "default"
@@ -78,25 +159,7 @@ const (
 	AIAccessOwn     = "own"
 )
 
-// The models a person may pick for their own key, cheapest first.
-var AIModels = []string{ "claude-haiku-5-5" , "claude-sonnet-5-5" , "claude-opus-5-5" }
-
 var aiPolicyKey = []byte( "ai_policy" )
-
-var (
-	ErrBadModel  = errors.New( "model must be claude-haiku-5-5, claude-sonnet-5-5 or claude-opus-5-5" )
-	ErrBadEffort = errors.New( "effort must be low, medium or high" )
-	ErrBadAccess = errors.New( "access must be default, shared or own" )
-)
-
-// UserAI is one person's own key and choices.
-type UserAI struct {
-	AnthropicKey string     `json:"anthropic_key,omitempty"`
-	Last4        string     `json:"last4,omitempty"`
-	SetAt        *time.Time `json:"set_at,omitempty"`
-	Model        string     `json:"model,omitempty"`
-	Effort       string     `json:"effort,omitempty"`
-}
 
 // AIPolicy is who may use the server's key.
 type AIPolicy struct {
@@ -111,68 +174,57 @@ func userAIKey( user_id uint64 ) ( key []byte ) {
 	return
 }
 
-func GetUserAI( store *db.Store , user_id uint64 ) ( settings *UserAI ) {
-	settings = &UserAI{}
-	if store.Get( db.BucketAppSecrets , userAIKey( user_id ) , settings ) != nil { settings = &UserAI{} }
+func GetUserAI( store *db.Store , user_id uint64 ) ( settings *AISettings ) {
+	settings = &AISettings{}
+	if store.Get( db.BucketAppSecrets , userAIKey( user_id ) , settings ) != nil { settings = &AISettings{} }
 	return
 }
 
 // UserAPIKey is the person's own key, opened, or "" without one.
 func UserAPIKey( store *db.Store , secret_key string , user_id uint64 ) ( api_key string , err error ) {
-	settings := GetUserAI( store , user_id )
-	if settings.AnthropicKey == "" { return }
-	api_key , err = encryption.ChaChaDecryptBase64String( encryption.SubKey( secret_key , encryption.PurposeAI ) , settings.AnthropicKey )
+	api_key , err = GetUserAI( store , user_id ).open( secret_key )
 	return
 }
 
-func validAIModel( model string ) ( ok bool ) {
-	for _ , known := range AIModels {
-		if known == model { ok = true }
-	}
-	return
-}
-
-// SetUserAI changes a person's own settings. A nil field is left as it is; an
-// empty api_key with remove_key true takes their key away; an empty model or
-// effort goes back to the app's.
-func SetUserAI( store *db.Store , secret_key string , user_id uint64 , api_key *string , remove_key bool , model *string , effort *string ) ( settings *UserAI , err error ) {
+// SetUserAI changes a person's own key and choices. An empty model or effort
+// goes back to the default.
+func SetUserAI( store *db.Store , secret_key string , user_id uint64 , change AIChange ) ( settings *AISettings , err error ) {
 	settings = GetUserAI( store , user_id )
-	if model != nil {
-		if *model != "" && validAIModel( *model ) == false {
-			err = ErrBadModel
-			return
-		}
-		settings.Model = *model
-	}
-	if effort != nil {
-		if *effort != "" && *effort != "low" && *effort != "medium" && *effort != "high" {
-			err = ErrBadEffort
-			return
-		}
-		settings.Effort = *effort
-	}
-	if remove_key {
-		settings.AnthropicKey , settings.Last4 , settings.SetAt = "" , "" , nil
-	} else if api_key != nil && strings.TrimSpace( *api_key ) != "" {
-		trimmed := strings.TrimSpace( *api_key )
-		if looksLikeAnthropicKey( trimmed ) == false {
-			err = ErrBadAPIKey
-			return
-		}
-		sealed , seal_err := encryption.ChaChaEncryptString( encryption.SubKey( secret_key , encryption.PurposeAI ) , trimmed )
-		if seal_err != nil {
-			err = seal_err
-			return
-		}
-		now := time.Now().UTC()
-		settings.AnthropicKey , settings.Last4 , settings.SetAt = sealed , trimmed[ len( trimmed ) - 4: ] , &now
-	}
+	if err = settings.apply( secret_key , user_id , change ); err != nil { return }
 	err = store.Put( db.BucketAppSecrets , userAIKey( user_id ) , settings )
 	return
 }
 
-func looksLikeAnthropicKey( api_key string ) ( ok bool ) {
-	ok = strings.HasPrefix( api_key , "sk-ant-" ) && len( api_key ) >= 20 && len( api_key ) <= 300 && strings.ContainsAny( api_key , " \t\r\n" ) == false
+// ---- Each service's model list ------------------------------------------
+//
+// Refreshed from the service with whichever key asked, and kept so the
+// screens can offer the list without asking again. Model names are not
+// secret.
+
+type AIModelList struct {
+	Models      []catalog.ModelInfo `json:"models"`
+	RefreshedAt *time.Time          `json:"refreshed_at,omitempty"`
+}
+
+func aiModelsKey( provider string ) ( key []byte ) {
+	key = []byte( "models:" + catalog.Normal( provider ) )
+	return
+}
+
+// AIModels is a service's last refreshed list, or what the app knows of it
+// before anyone has refreshed.
+func AIModels( store *db.Store , provider string ) ( list *AIModelList ) {
+	list = &AIModelList{}
+	if store.Get( db.BucketAppSecrets , aiModelsKey( provider ) , list ) != nil || len( list.Models ) == 0 {
+		list = &AIModelList{ Models: catalog.BuiltIn( provider ) }
+	}
+	return
+}
+
+func SaveAIModels( store *db.Store , provider string , found []catalog.ModelInfo ) ( list *AIModelList , err error ) {
+	now := time.Now().UTC()
+	list = &AIModelList{ Models: found , RefreshedAt: &now }
+	err = store.Put( db.BucketAppSecrets , aiModelsKey( provider ) , list )
 	return
 }
 

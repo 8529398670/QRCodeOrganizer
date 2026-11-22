@@ -14,17 +14,24 @@ import (
 func ( handlers *Handlers ) mountDeclared( app *fiber.App ) {
 	apidoc.Mount( app , "GET" , "/api/account/ai" , apidoc.Op{
 		Summary: "Your photo-reading settings",
-		Description: "Whether you have your own Anthropic key (never the key itself), the model and effort you picked, whether you may use the server's key, and whose key your photos would go on now.",
+		Description: "Whether you have your own AI key (never the key itself) and for which service, the model and effort you picked, whether you may use the server's key, and whose key your photos would go on now.",
 		Tag: "Photo extraction",
 		Errors: []int{ 401 },
 	} , handlers.myAISettings , handlers.Guard.RequireLogin )
 	apidoc.Mount( app , "POST" , "/api/account/ai" , apidoc.Op{
-		Summary: "Set your own key, model and effort",
-		Description: "Store your own Anthropic API key, sealed and never shown again, or remove it; and pick the model and effort your own key uses. Only what you send changes.",
+		Summary: "Set your own key, service, model and effort",
+		Description: "Store your own AI key for one service, sealed and never shown again, or remove it; and pick the model and effort your own key uses. Only what you send changes. A new key also loads that service's model list.",
 		Tag: "Photo extraction",
 		Access: apidoc.SessionOnly,
 		Errors: []int{ 400 , 401 , 403 },
 	} , handlers.setMyAI , handlers.Guard.RequireLogin , handlers.Guard.RequireSession )
+	apidoc.Mount( app , "POST" , "/api/account/ai/models" , apidoc.Op{
+		Summary: "Load a service's model list",
+		Description: "Ask a service which of its models can read photos, and which efforts they take, with the key you typed (not stored) or your saved one, and keep the list for the screens.",
+		Tag: "Photo extraction",
+		Access: apidoc.SessionOnly,
+		Errors: []int{ 400 , 401 , 403 },
+	} , handlers.refreshMyModels , handlers.Guard.RequireLogin , handlers.Guard.RequireSession )
 	apidoc.Mount( app , "GET" , "/api/account/calendar-feed" , apidoc.Op{
 		Summary: "Whether your calendar feed is on",
 		Description: "Whether you have a calendar feed address switched on.",
@@ -154,21 +161,21 @@ func ( handlers *Handlers ) mountDeclared( app *fiber.App ) {
 		Errors: []int{ 400 , 401 , 403 , 404 , 409 },
 	} , handlers.startTwoFactor , handlers.featureGuards()[ "two_factor" ] , handlers.Guard.RequireLogin , handlers.Guard.RequireSession )
 	apidoc.Mount( app , "GET" , "/api/admin/ai-access" , apidoc.Op{
-		Summary: "Who may use the server's Anthropic key",
+		Summary: "Who may use the server's AI key",
 		Description: "The default for everyone, and each person's choice: follow the default, may use the server's key, or must bring their own. Someone with their own key always uses it.",
 		Tag: "Photo extraction",
 		Role: apidoc.Admin,
 		Errors: []int{ 400 , 401 , 403 },
 	} , handlers.listAIAccess , handlers.Guard.RequireAdmin )
 	apidoc.Mount( app , "POST" , "/api/admin/ai-access" , apidoc.Op{
-		Summary: "Set the default for the server's Anthropic key",
+		Summary: "Set the default for the server's AI key",
 		Description: "Whether people without their own key may use the server's by default.",
 		Tag: "Photo extraction",
 		Role: apidoc.Admin,
 		Errors: []int{ 400 , 401 , 403 },
 	} , handlers.setAIDefault , handlers.Guard.RequireAdmin )
 	apidoc.Mount( app , "POST" , "/api/admin/ai-access/{user_id}" , apidoc.Op{
-		Summary: "Set one person's use of the server's Anthropic key",
+		Summary: "Set one person's use of the server's AI key",
 		Description: "Let one person use the server's key, make them bring their own, or have them follow the default.",
 		Tag: "Photo extraction",
 		Role: apidoc.Admin,
@@ -452,7 +459,7 @@ func ( handlers *Handlers ) mountDeclared( app *fiber.App ) {
 	} , handlers.revokeUserSession , handlers.Guard.RequireAdmin )
 	apidoc.Mount( app , "GET" , "/api/ai" , apidoc.Op{
 		Summary: "Whether Smart Photo Extraction is ready for you",
-		Description: "Whether your photos can be read, whose key they would go on (your own or the server's), and with which model.",
+		Description: "Whether your photos can be read, whose key they would go on (your own or the server's), and which service and model would read them.",
 		Tag: "Photo extraction",
 		Errors: []int{ 401 },
 	} , handlers.getAIStatus , handlers.Guard.RequireLogin )
@@ -481,7 +488,7 @@ func ( handlers *Handlers ) mountDeclared( app *fiber.App ) {
 		Errors: []int{ 400 , 401 , 403 },
 	} , handlers.revokeMySession , handlers.Guard.RequireLogin )
 	apidoc.MountBulk( app , "/api/bulk/admin/ai-access" , "POST /api/admin/ai-access/{user_id}" , apidoc.Op{
-		Summary: "Set one person's use of the server's Anthropic key, for many at once",
+		Summary: "Set one person's use of the server's AI key, for many at once",
 		Description: "Runs POST /api/admin/ai-access/{user_id} once per item: items holds each one's id and fields, shared the fields they have in common (an item's own win). Each runs as that route would, in order, and one failing does not stop the rest; the reply says how each went. At most 100 items.",
 		Tag: "Photo extraction",
 		Role: apidoc.Admin,
@@ -1152,21 +1159,29 @@ func ( handlers *Handlers ) mountDeclared( app *fiber.App ) {
 		Errors: []int{ 400 , 401 , 403 },
 	} , handlers.markNotificationsRead , handlers.Guard.RequireLogin )
 	apidoc.Mount( app , "GET" , "/api/owner/ai" , apidoc.Op{
-		Summary: "The Anthropic API key, as far as it can be shown",
-		Description: "Whether an API key is set, its last four characters and when it was set. The key itself is never shown again.",
+		Summary: "The server's AI key, as far as it can be shown",
+		Description: "Which service the server's key is for, its last four characters and when it was set, the model and effort it reads photos with, and every service with its model list. The key itself is never shown again.",
 		Tag: "Photo extraction",
 		Access: apidoc.SessionOnly,
 		Role: apidoc.Owner,
 		Errors: []int{ 404 },
 	} , handlers.getAIKey , handlers.Guard.RequireOwner )
 	apidoc.Mount( app , "POST" , "/api/owner/ai" , apidoc.Op{
-		Summary: "Set or remove the Anthropic API key",
-		Description: "Store the API key Smart Photo Extraction uses, sealed in the database, or remove it with an empty value. It is never shown again.",
+		Summary: "Set the server's AI key, service, model and effort",
+		Description: "Store the key Smart Photo Extraction uses, sealed in the database, for one service, or remove it; and pick the model and effort. Only what you send changes. A new key also loads that service's model list.",
 		Tag: "Photo extraction",
 		Access: apidoc.SessionOnly,
 		Role: apidoc.Owner,
 		Errors: []int{ 400 , 403 , 404 },
 	} , handlers.setAIKey , handlers.Guard.RequireOwner )
+	apidoc.Mount( app , "POST" , "/api/owner/ai/models" , apidoc.Op{
+		Summary: "Load a service's model list for the server's key",
+		Description: "Ask a service which of its models can read photos, and which efforts they take, and keep the list for the screens.",
+		Tag: "Photo extraction",
+		Access: apidoc.SessionOnly,
+		Role: apidoc.Owner,
+		Errors: []int{ 400 , 403 , 404 },
+	} , handlers.refreshServerModels , handlers.Guard.RequireOwner )
 	apidoc.Mount( app , "GET" , "/api/owner/jobs" , apidoc.Op{
 		Summary: "Background jobs",
 		Tag: "Owner",
@@ -1512,7 +1527,7 @@ func ( handlers *Handlers ) registerDeclaredTools( server *mcp.Server ) {
 	} , nil ) )
 	server.Register( mcp.ForRoute( "GET /api/admin/ai-access" , handlers.listAIAccess , mcp.Tool{
 		Name: "admin_list_ai_access",
-		Title: "Who may use the server's Anthropic key (admin)",
+		Title: "Who may use the server's AI key (admin)",
 		Description: "The default for everyone, and each person's choice: follow the default, may use the server's key, or must bring their own. Someone with their own key always uses it.",
 		ReadOnly: true,
 		AdminOnly: true,
@@ -1642,19 +1657,19 @@ func ( handlers *Handlers ) registerDeclaredTools( server *mcp.Server ) {
 	} ) )
 	server.Register( mcp.ForRoute( "POST /api/admin/ai-access/{user_id}" , handlers.setAIAccess , mcp.Tool{
 		Name: "admin_set_ai_access",
-		Title: "Set one person's use of the server's Anthropic key (admin)",
+		Title: "Set one person's use of the server's AI key (admin)",
 		Description: "Let one person use the server's key, make them bring their own, or have them follow the default.",
 		AdminOnly: true,
 	} , nil ) )
 	server.Register( mcp.ForBulk( "POST /api/bulk/admin/ai-access" , "POST /api/admin/ai-access/{user_id}" , handlers.setAIAccess , mcp.Tool{
 		Name: "admin_set_ai_access_bulk",
-		Title: "Set one person's use of the server's Anthropic key, for many at once (admin)",
+		Title: "Set one person's use of the server's AI key, for many at once (admin)",
 		Description: "Runs admin_set_ai_access once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
 		AdminOnly: true,
 	} ) )
 	server.Register( mcp.ForRoute( "POST /api/admin/ai-access" , handlers.setAIDefault , mcp.Tool{
 		Name: "admin_set_ai_default",
-		Title: "Set the default for the server's Anthropic key (admin)",
+		Title: "Set the default for the server's AI key (admin)",
 		Description: "Whether people without their own key may use the server's by default.",
 		AdminOnly: true,
 	} , nil ) )
@@ -1720,7 +1735,7 @@ func ( handlers *Handlers ) registerDeclaredTools( server *mcp.Server ) {
 	server.Register( mcp.ForRoute( "GET /api/ai" , handlers.getAIStatus , mcp.Tool{
 		Name: "ai_status",
 		Title: "Whether Smart Photo Extraction is ready for you",
-		Description: "Whether your photos can be read, whose key they would go on (your own or the server's), and with which model.",
+		Description: "Whether your photos can be read, whose key they would go on (your own or the server's), and which service and model would read them.",
 		ReadOnly: true,
 	} , nil ) )
 	server.Register( mcp.ForRoute( "GET /api/account/calendar-feed" , handlers.calendarFeedStatus , mcp.Tool{
@@ -1998,7 +2013,7 @@ func ( handlers *Handlers ) registerDeclaredTools( server *mcp.Server ) {
 	server.Register( mcp.ForRoute( "GET /api/account/ai" , handlers.myAISettings , mcp.Tool{
 		Name: "my_ai_settings",
 		Title: "Your photo-reading settings",
-		Description: "Whether you have your own Anthropic key (never the key itself), the model and effort you picked, whether you may use the server's key, and whose key your photos would go on now.",
+		Description: "Whether you have your own AI key (never the key itself) and for which service, the model and effort you picked, whether you may use the server's key, and whose key your photos would go on now.",
 		ReadOnly: true,
 	} , nil ) )
 	server.Register( mcp.ForRoute( "GET /api/account/storage" , handlers.myStorage , mcp.Tool{

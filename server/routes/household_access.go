@@ -74,7 +74,7 @@ func isValidation( cause error ) ( result bool ) {
 		models.ErrBadName , models.ErrBadRole , models.ErrBadField , models.ErrTooManyFields , models.ErrTooManyColors ,
 		models.ErrNoSuchUser , models.ErrLocationLoop , models.ErrLabelLoop , models.ErrBadMove , models.ErrTooMany ,
 		models.ErrTooLong , models.ErrBadDate , models.ErrBadQuantity , models.ErrBadClaim , models.ErrSheetSize ,
-		models.ErrBadAPIKey , models.ErrBadModel , models.ErrBadEffort , models.ErrBadAccess ,
+		models.ErrBadAPIKey , models.ErrBadModel , models.ErrBadEffort , models.ErrBadAccess , models.ErrBadProvider , models.ErrNeedKey ,
 	} {
 		if errors.Is( cause , known ) {
 			result = true

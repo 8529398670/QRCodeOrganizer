@@ -113,6 +113,86 @@
         ],
         "type": "object"
       },
+      "AIProvider": {
+        "properties": {
+          "default_effort": {
+            "description": "The effort an unpicked effort means; empty is the model's own.",
+            "type": "string"
+          },
+          "default_model": {
+            "description": "The model an unpicked model means; empty when there is none yet (load the list).",
+            "type": "string"
+          },
+          "efforts": {
+            "description": "The effort levels it takes, least first.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": {
+            "description": "anthropic, openai, gemini, xai or openrouter.",
+            "type": "string"
+          },
+          "key_hint": {
+            "description": "How its keys start.",
+            "type": "string"
+          },
+          "keys_url": {
+            "description": "Where to get a key.",
+            "type": "string"
+          },
+          "models": {
+            "description": "Its models that read photos, from the last refresh. A model's efforts are null when the service does not say, empty when it takes none.",
+            "items": {
+              "properties": {
+                "efforts": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "efforts",
+                "id",
+                "name"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          },
+          "refreshed_at": {
+            "description": "When the list was last loaded from the service; null is the app's built-in list.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "default_effort",
+          "default_model",
+          "efforts",
+          "id",
+          "key_hint",
+          "keys_url",
+          "models",
+          "name",
+          "refreshed_at"
+        ],
+        "type": "object"
+      },
       "APIKey": {
         "properties": {
           "created_at": {
@@ -2224,7 +2304,7 @@
   "paths": {
     "/api/account/ai": {
       "get": {
-        "description": "Whether you have your own Anthropic key (never the key itself), the model and effort you picked, whether you may use the server's key, and whose key your photos would go on now.",
+        "description": "Whether you have your own AI key (never the key itself) and for which service, the model and effort you picked, whether you may use the server's key, and whose key your photos would go on now.",
         "operationId": "get_api_account_ai",
         "responses": {
           "200": {
@@ -2232,18 +2312,12 @@
               "application/json": {
                 "schema": {
                   "properties": {
-                    "app_effort": {
-                      "type": "string"
-                    },
-                    "app_model": {
-                      "description": "The app's model, used with the server's key.",
-                      "type": "string"
-                    },
                     "daily_limit": {
                       "description": "Photos one household may send a day with the server's key.",
                       "type": "integer"
                     },
                     "effort": {
+                      "description": "Empty is the model's own.",
                       "type": "string"
                     },
                     "enabled": {
@@ -2259,18 +2333,15 @@
                       "type": "string"
                     },
                     "model": {
-                      "description": "The model your photos would be read with.",
+                      "description": "The model your photos would be read with; empty until one is picked or a model list is loaded.",
                       "type": "string"
                     },
-                    "models": {
-                      "description": "The models you may pick, cheapest first.",
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
+                    "models_error": {
+                      "description": "Why the model list could not be loaded, when a save tried.",
+                      "type": "string"
                     },
                     "own_effort": {
-                      "description": "The effort you picked for your own key; empty uses the app's.",
+                      "description": "The effort you picked for your own key; empty is the default.",
                       "type": "string"
                     },
                     "own_key_set": {
@@ -2278,12 +2349,40 @@
                       "type": "boolean"
                     },
                     "own_model": {
-                      "description": "The model you picked for your own key; empty uses the app's.",
+                      "description": "The model you picked for your own key; empty is the default.",
                       "type": "string"
+                    },
+                    "own_provider": {
+                      "description": "The service your own key is for (or will be, once you add one).",
+                      "type": "string"
+                    },
+                    "provider": {
+                      "description": "The service your photos would go to: anthropic, openai, gemini, xai or openrouter.",
+                      "type": "string"
+                    },
+                    "provider_name": {
+                      "type": "string"
+                    },
+                    "providers": {
+                      "items": {
+                        "$ref": "#/components/schemas/AIProvider"
+                      },
+                      "type": "array"
                     },
                     "ready": {
                       "description": "Your photos can be read: switched on, and there is a key you may use.",
                       "type": "boolean"
+                    },
+                    "server_effort": {
+                      "type": "string"
+                    },
+                    "server_model": {
+                      "description": "The model the server's key reads photos with: the default for your own key on the same service.",
+                      "type": "string"
+                    },
+                    "server_provider": {
+                      "description": "The service the server's key is for.",
+                      "type": "string"
                     },
                     "set_at": {
                       "format": "date-time",
@@ -2307,19 +2406,23 @@
                     }
                   },
                   "required": [
-                    "app_effort",
-                    "app_model",
                     "daily_limit",
                     "effort",
                     "enabled",
                     "key_set",
                     "last4",
                     "model",
-                    "models",
                     "own_effort",
                     "own_key_set",
                     "own_model",
+                    "own_provider",
+                    "provider",
+                    "provider_name",
+                    "providers",
                     "ready",
+                    "server_effort",
+                    "server_model",
+                    "server_provider",
                     "set_at",
                     "shared_allowed",
                     "using"
@@ -2354,7 +2457,7 @@
         ]
       },
       "post": {
-        "description": "Store your own Anthropic API key, sealed and never shown again, or remove it; and pick the model and effort your own key uses. Only what you send changes.",
+        "description": "Store your own AI key for one service, sealed and never shown again, or remove it; and pick the model and effort your own key uses. Only what you send changes. A new key also loads that service's model list.",
         "operationId": "post_api_account_ai",
         "requestBody": {
           "content": {
@@ -2363,7 +2466,7 @@
                 "additionalProperties": false,
                 "properties": {
                   "api_key": {
-                    "description": "Your own Anthropic API key (sk-ant-...). Leave out to keep the one you have.",
+                    "description": "Your own key for that service. Leave out to keep the one you have.",
                     "maxLength": 300,
                     "type": [
                       "string",
@@ -2375,25 +2478,29 @@
                     "type": "string"
                   },
                   "effort": {
-                    "description": "The effort for your own key; empty uses the app's.",
-                    "enum": [
-                      "",
-                      "low",
-                      "medium",
-                      "high"
-                    ],
+                    "description": "One of the service's efforts; empty is the default.",
+                    "maxLength": 20,
                     "type": [
                       "string",
                       "null"
                     ]
                   },
                   "model": {
-                    "description": "The model for your own key; empty uses the app's.",
+                    "description": "The model for your own key; empty is the default.",
+                    "maxLength": 128,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "provider": {
+                    "description": "The service your key is for. Changing it needs a key for the new one.",
                     "enum": [
-                      "",
-                      "claude-haiku-5-5",
-                      "claude-sonnet-5-5",
-                      "claude-opus-5-5"
+                      "anthropic",
+                      "openai",
+                      "gemini",
+                      "xai",
+                      "openrouter"
                     ],
                     "type": [
                       "string",
@@ -2417,18 +2524,12 @@
               "application/json": {
                 "schema": {
                   "properties": {
-                    "app_effort": {
-                      "type": "string"
-                    },
-                    "app_model": {
-                      "description": "The app's model, used with the server's key.",
-                      "type": "string"
-                    },
                     "daily_limit": {
                       "description": "Photos one household may send a day with the server's key.",
                       "type": "integer"
                     },
                     "effort": {
+                      "description": "Empty is the model's own.",
                       "type": "string"
                     },
                     "enabled": {
@@ -2444,18 +2545,15 @@
                       "type": "string"
                     },
                     "model": {
-                      "description": "The model your photos would be read with.",
+                      "description": "The model your photos would be read with; empty until one is picked or a model list is loaded.",
                       "type": "string"
                     },
-                    "models": {
-                      "description": "The models you may pick, cheapest first.",
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
+                    "models_error": {
+                      "description": "Why the model list could not be loaded, when a save tried.",
+                      "type": "string"
                     },
                     "own_effort": {
-                      "description": "The effort you picked for your own key; empty uses the app's.",
+                      "description": "The effort you picked for your own key; empty is the default.",
                       "type": "string"
                     },
                     "own_key_set": {
@@ -2463,12 +2561,40 @@
                       "type": "boolean"
                     },
                     "own_model": {
-                      "description": "The model you picked for your own key; empty uses the app's.",
+                      "description": "The model you picked for your own key; empty is the default.",
                       "type": "string"
+                    },
+                    "own_provider": {
+                      "description": "The service your own key is for (or will be, once you add one).",
+                      "type": "string"
+                    },
+                    "provider": {
+                      "description": "The service your photos would go to: anthropic, openai, gemini, xai or openrouter.",
+                      "type": "string"
+                    },
+                    "provider_name": {
+                      "type": "string"
+                    },
+                    "providers": {
+                      "items": {
+                        "$ref": "#/components/schemas/AIProvider"
+                      },
+                      "type": "array"
                     },
                     "ready": {
                       "description": "Your photos can be read: switched on, and there is a key you may use.",
                       "type": "boolean"
+                    },
+                    "server_effort": {
+                      "type": "string"
+                    },
+                    "server_model": {
+                      "description": "The model the server's key reads photos with: the default for your own key on the same service.",
+                      "type": "string"
+                    },
+                    "server_provider": {
+                      "description": "The service the server's key is for.",
+                      "type": "string"
                     },
                     "set_at": {
                       "format": "date-time",
@@ -2492,19 +2618,23 @@
                     }
                   },
                   "required": [
-                    "app_effort",
-                    "app_model",
                     "daily_limit",
                     "effort",
                     "enabled",
                     "key_set",
                     "last4",
                     "model",
-                    "models",
                     "own_effort",
                     "own_key_set",
                     "own_model",
+                    "own_provider",
+                    "provider",
+                    "provider_name",
+                    "providers",
                     "ready",
+                    "server_effort",
+                    "server_model",
+                    "server_provider",
                     "set_at",
                     "shared_allowed",
                     "using"
@@ -2536,7 +2666,203 @@
             "sessionCookie": []
           }
         ],
-        "summary": "Set your own key, model and effort",
+        "summary": "Set your own key, service, model and effort",
+        "tags": [
+          "Photo extraction"
+        ]
+      }
+    },
+    "/api/account/ai/models": {
+      "post": {
+        "description": "Ask a service which of its models can read photos, and which efforts they take, with the key you typed (not stored) or your saved one, and keep the list for the screens.",
+        "operationId": "post_api_account_ai_models",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "api_key": {
+                    "description": "A key to ask with, not stored. Leave out to use the saved key, when it is for this service.",
+                    "maxLength": 300,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "csrf_token": {
+                    "description": "From GET /api/me. Browser sessions only.",
+                    "type": "string"
+                  },
+                  "provider": {
+                    "enum": [
+                      "anthropic",
+                      "openai",
+                      "gemini",
+                      "xai",
+                      "openrouter"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "provider"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "daily_limit": {
+                      "description": "Photos one household may send a day with the server's key.",
+                      "type": "integer"
+                    },
+                    "effort": {
+                      "description": "Empty is the model's own.",
+                      "type": "string"
+                    },
+                    "enabled": {
+                      "description": "ai.enabled in the settings.",
+                      "type": "boolean"
+                    },
+                    "key_set": {
+                      "description": "The server has a key of its own.",
+                      "type": "boolean"
+                    },
+                    "last4": {
+                      "description": "Your key's last four characters, to tell keys apart.",
+                      "type": "string"
+                    },
+                    "model": {
+                      "description": "The model your photos would be read with; empty until one is picked or a model list is loaded.",
+                      "type": "string"
+                    },
+                    "models_error": {
+                      "description": "Why the model list could not be loaded, when a save tried.",
+                      "type": "string"
+                    },
+                    "own_effort": {
+                      "description": "The effort you picked for your own key; empty is the default.",
+                      "type": "string"
+                    },
+                    "own_key_set": {
+                      "description": "You have a key of your own set.",
+                      "type": "boolean"
+                    },
+                    "own_model": {
+                      "description": "The model you picked for your own key; empty is the default.",
+                      "type": "string"
+                    },
+                    "own_provider": {
+                      "description": "The service your own key is for (or will be, once you add one).",
+                      "type": "string"
+                    },
+                    "provider": {
+                      "description": "The service your photos would go to: anthropic, openai, gemini, xai or openrouter.",
+                      "type": "string"
+                    },
+                    "provider_name": {
+                      "type": "string"
+                    },
+                    "providers": {
+                      "items": {
+                        "$ref": "#/components/schemas/AIProvider"
+                      },
+                      "type": "array"
+                    },
+                    "ready": {
+                      "description": "Your photos can be read: switched on, and there is a key you may use.",
+                      "type": "boolean"
+                    },
+                    "server_effort": {
+                      "type": "string"
+                    },
+                    "server_model": {
+                      "description": "The model the server's key reads photos with: the default for your own key on the same service.",
+                      "type": "string"
+                    },
+                    "server_provider": {
+                      "description": "The service the server's key is for.",
+                      "type": "string"
+                    },
+                    "set_at": {
+                      "format": "date-time",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "shared_allowed": {
+                      "description": "You may use the server's key when you have none of your own.",
+                      "type": "boolean"
+                    },
+                    "using": {
+                      "description": "Whose key your photos would go on: your own, the server's, or none you may use.",
+                      "enum": [
+                        "own",
+                        "shared",
+                        "none"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "daily_limit",
+                    "effort",
+                    "enabled",
+                    "key_set",
+                    "last4",
+                    "model",
+                    "own_effort",
+                    "own_key_set",
+                    "own_model",
+                    "own_provider",
+                    "provider",
+                    "provider_name",
+                    "providers",
+                    "ready",
+                    "server_effort",
+                    "server_model",
+                    "server_provider",
+                    "set_at",
+                    "shared_allowed",
+                    "using"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "429": {
+            "$ref": "#/components/responses/E429"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Load a service's model list",
         "tags": [
           "Photo extraction"
         ]
@@ -4214,7 +4540,7 @@
             "apiKey": []
           }
         ],
-        "summary": "Who may use the server's Anthropic key",
+        "summary": "Who may use the server's AI key",
         "tags": [
           "Photo extraction"
         ],
@@ -4314,7 +4640,7 @@
             "apiKey": []
           }
         ],
-        "summary": "Set the default for the server's Anthropic key",
+        "summary": "Set the default for the server's AI key",
         "tags": [
           "Photo extraction"
         ],
@@ -4436,7 +4762,7 @@
             "apiKey": []
           }
         ],
-        "summary": "Set one person's use of the server's Anthropic key",
+        "summary": "Set one person's use of the server's AI key",
         "tags": [
           "Photo extraction"
         ],
@@ -7885,7 +8211,7 @@
     },
     "/api/ai": {
       "get": {
-        "description": "Whether your photos can be read, whose key they would go on (your own or the server's), and with which model.",
+        "description": "Whether your photos can be read, whose key they would go on (your own or the server's), and which service and model would read them.",
         "operationId": "get_api_ai",
         "responses": {
           "200": {
@@ -7898,6 +8224,7 @@
                       "type": "integer"
                     },
                     "effort": {
+                      "description": "Empty is the model's own.",
                       "type": "string"
                     },
                     "enabled": {
@@ -7909,7 +8236,14 @@
                       "type": "boolean"
                     },
                     "model": {
-                      "description": "The model your photos would be read with.",
+                      "description": "The model your photos would be read with; empty until one is picked or a model list is loaded.",
+                      "type": "string"
+                    },
+                    "provider": {
+                      "description": "The service your photos would go to: anthropic, openai, gemini, xai or openrouter.",
+                      "type": "string"
+                    },
+                    "provider_name": {
                       "type": "string"
                     },
                     "ready": {
@@ -7932,6 +8266,8 @@
                     "enabled",
                     "key_set",
                     "model",
+                    "provider",
+                    "provider_name",
                     "ready",
                     "using"
                   ],
@@ -8247,7 +8583,7 @@
             "apiKey": []
           }
         ],
-        "summary": "Set one person's use of the server's Anthropic key, for many at once",
+        "summary": "Set one person's use of the server's AI key, for many at once",
         "tags": [
           "Photo extraction"
         ],
@@ -17642,7 +17978,7 @@
     },
     "/api/owner/ai": {
       "get": {
-        "description": "Whether an API key is set, its last four characters and when it was set. The key itself is never shown again.",
+        "description": "Which service the server's key is for, its last four characters and when it was set, the model and effort it reads photos with, and every service with its model list. The key itself is never shown again.",
         "operationId": "get_api_owner_ai",
         "responses": {
           "200": {
@@ -17650,11 +17986,27 @@
               "application/json": {
                 "schema": {
                   "properties": {
+                    "app_effort": {
+                      "type": "string"
+                    },
+                    "app_model": {
+                      "description": "config.yaml's ai.model, the default when the server's key is Anthropic's.",
+                      "type": "string"
+                    },
+                    "chosen_effort": {
+                      "description": "The effort picked; empty is the default (effort above).",
+                      "type": "string"
+                    },
+                    "chosen_model": {
+                      "description": "The model picked for the server's key; empty is the default (model above).",
+                      "type": "string"
+                    },
                     "daily_limit": {
                       "description": "Photos one household may send a day with the server's key.",
                       "type": "integer"
                     },
                     "effort": {
+                      "description": "Empty is the model's own.",
                       "type": "string"
                     },
                     "enabled": {
@@ -17670,8 +18022,25 @@
                       "type": "string"
                     },
                     "model": {
-                      "description": "The model your photos would be read with.",
+                      "description": "The model your photos would be read with; empty until one is picked or a model list is loaded.",
                       "type": "string"
+                    },
+                    "models_error": {
+                      "description": "Why the model list could not be loaded, when a save or refresh tried.",
+                      "type": "string"
+                    },
+                    "provider": {
+                      "description": "The service your photos would go to: anthropic, openai, gemini, xai or openrouter.",
+                      "type": "string"
+                    },
+                    "provider_name": {
+                      "type": "string"
+                    },
+                    "providers": {
+                      "items": {
+                        "$ref": "#/components/schemas/AIProvider"
+                      },
+                      "type": "array"
                     },
                     "ready": {
                       "description": "Your photos can be read: switched on, and there is a key you may use.",
@@ -17695,12 +18064,19 @@
                     }
                   },
                   "required": [
+                    "app_effort",
+                    "app_model",
+                    "chosen_effort",
+                    "chosen_model",
                     "daily_limit",
                     "effort",
                     "enabled",
                     "key_set",
                     "last4",
                     "model",
+                    "provider",
+                    "provider_name",
+                    "providers",
                     "ready",
                     "set_at",
                     "using"
@@ -17726,14 +18102,14 @@
             "sessionCookie": []
           }
         ],
-        "summary": "The Anthropic API key, as far as it can be shown",
+        "summary": "The server's AI key, as far as it can be shown",
         "tags": [
           "Photo extraction"
         ],
         "x-required-role": "owner"
       },
       "post": {
-        "description": "Store the API key Smart Photo Extraction uses, sealed in the database, or remove it with an empty value. It is never shown again.",
+        "description": "Store the key Smart Photo Extraction uses, sealed in the database, for one service, or remove it; and pick the model and effort. Only what you send changes. A new key also loads that service's model list.",
         "operationId": "post_api_owner_ai",
         "requestBody": {
           "content": {
@@ -17742,18 +18118,52 @@
                 "additionalProperties": false,
                 "properties": {
                   "api_key": {
-                    "description": "An Anthropic API key (sk-ant-...), or empty to remove it.",
+                    "description": "A key for that service. Leave out to keep the one there is.",
                     "maxLength": 300,
-                    "type": "string"
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "csrf_token": {
                     "description": "From GET /api/me. Browser sessions only.",
                     "type": "string"
+                  },
+                  "effort": {
+                    "description": "One of the service's efforts; empty is the default.",
+                    "maxLength": 20,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "model": {
+                    "description": "The model; empty is the default.",
+                    "maxLength": 128,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "provider": {
+                    "description": "The service the key is for. Changing it needs a key for the new one.",
+                    "enum": [
+                      "anthropic",
+                      "openai",
+                      "gemini",
+                      "xai",
+                      "openrouter"
+                    ],
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "remove_key": {
+                    "description": "Take the server's key away.",
+                    "type": "boolean"
                   }
                 },
-                "required": [
-                  "api_key"
-                ],
                 "type": "object"
               }
             }
@@ -17766,11 +18176,27 @@
               "application/json": {
                 "schema": {
                   "properties": {
+                    "app_effort": {
+                      "type": "string"
+                    },
+                    "app_model": {
+                      "description": "config.yaml's ai.model, the default when the server's key is Anthropic's.",
+                      "type": "string"
+                    },
+                    "chosen_effort": {
+                      "description": "The effort picked; empty is the default (effort above).",
+                      "type": "string"
+                    },
+                    "chosen_model": {
+                      "description": "The model picked for the server's key; empty is the default (model above).",
+                      "type": "string"
+                    },
                     "daily_limit": {
                       "description": "Photos one household may send a day with the server's key.",
                       "type": "integer"
                     },
                     "effort": {
+                      "description": "Empty is the model's own.",
                       "type": "string"
                     },
                     "enabled": {
@@ -17786,8 +18212,25 @@
                       "type": "string"
                     },
                     "model": {
-                      "description": "The model your photos would be read with.",
+                      "description": "The model your photos would be read with; empty until one is picked or a model list is loaded.",
                       "type": "string"
+                    },
+                    "models_error": {
+                      "description": "Why the model list could not be loaded, when a save or refresh tried.",
+                      "type": "string"
+                    },
+                    "provider": {
+                      "description": "The service your photos would go to: anthropic, openai, gemini, xai or openrouter.",
+                      "type": "string"
+                    },
+                    "provider_name": {
+                      "type": "string"
+                    },
+                    "providers": {
+                      "items": {
+                        "$ref": "#/components/schemas/AIProvider"
+                      },
+                      "type": "array"
                     },
                     "ready": {
                       "description": "Your photos can be read: switched on, and there is a key you may use.",
@@ -17811,12 +18254,19 @@
                     }
                   },
                   "required": [
+                    "app_effort",
+                    "app_model",
+                    "chosen_effort",
+                    "chosen_model",
                     "daily_limit",
                     "effort",
                     "enabled",
                     "key_set",
                     "last4",
                     "model",
+                    "provider",
+                    "provider_name",
+                    "providers",
                     "ready",
                     "set_at",
                     "using"
@@ -17848,7 +18298,184 @@
             "sessionCookie": []
           }
         ],
-        "summary": "Set or remove the Anthropic API key",
+        "summary": "Set the server's AI key, service, model and effort",
+        "tags": [
+          "Photo extraction"
+        ],
+        "x-required-role": "owner"
+      }
+    },
+    "/api/owner/ai/models": {
+      "post": {
+        "description": "Ask a service which of its models can read photos, and which efforts they take, and keep the list for the screens.",
+        "operationId": "post_api_owner_ai_models",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "api_key": {
+                    "description": "A key to ask with, not stored. Leave out to use the saved key, when it is for this service.",
+                    "maxLength": 300,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "csrf_token": {
+                    "description": "From GET /api/me. Browser sessions only.",
+                    "type": "string"
+                  },
+                  "provider": {
+                    "enum": [
+                      "anthropic",
+                      "openai",
+                      "gemini",
+                      "xai",
+                      "openrouter"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "provider"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "app_effort": {
+                      "type": "string"
+                    },
+                    "app_model": {
+                      "description": "config.yaml's ai.model, the default when the server's key is Anthropic's.",
+                      "type": "string"
+                    },
+                    "chosen_effort": {
+                      "description": "The effort picked; empty is the default (effort above).",
+                      "type": "string"
+                    },
+                    "chosen_model": {
+                      "description": "The model picked for the server's key; empty is the default (model above).",
+                      "type": "string"
+                    },
+                    "daily_limit": {
+                      "description": "Photos one household may send a day with the server's key.",
+                      "type": "integer"
+                    },
+                    "effort": {
+                      "description": "Empty is the model's own.",
+                      "type": "string"
+                    },
+                    "enabled": {
+                      "description": "ai.enabled in the settings.",
+                      "type": "boolean"
+                    },
+                    "key_set": {
+                      "description": "The server has a key of its own.",
+                      "type": "boolean"
+                    },
+                    "last4": {
+                      "description": "The key's last four characters, to tell keys apart.",
+                      "type": "string"
+                    },
+                    "model": {
+                      "description": "The model your photos would be read with; empty until one is picked or a model list is loaded.",
+                      "type": "string"
+                    },
+                    "models_error": {
+                      "description": "Why the model list could not be loaded, when a save or refresh tried.",
+                      "type": "string"
+                    },
+                    "provider": {
+                      "description": "The service your photos would go to: anthropic, openai, gemini, xai or openrouter.",
+                      "type": "string"
+                    },
+                    "provider_name": {
+                      "type": "string"
+                    },
+                    "providers": {
+                      "items": {
+                        "$ref": "#/components/schemas/AIProvider"
+                      },
+                      "type": "array"
+                    },
+                    "ready": {
+                      "description": "Your photos can be read: switched on, and there is a key you may use.",
+                      "type": "boolean"
+                    },
+                    "set_at": {
+                      "format": "date-time",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "using": {
+                      "description": "Whose key your photos would go on: your own, the server's, or none you may use.",
+                      "enum": [
+                        "own",
+                        "shared",
+                        "none"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "app_effort",
+                    "app_model",
+                    "chosen_effort",
+                    "chosen_model",
+                    "daily_limit",
+                    "effort",
+                    "enabled",
+                    "key_set",
+                    "last4",
+                    "model",
+                    "provider",
+                    "provider_name",
+                    "providers",
+                    "ready",
+                    "set_at",
+                    "using"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "429": {
+            "$ref": "#/components/responses/E429"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Load a service's model list for the server's key",
         "tags": [
           "Photo extraction"
         ],

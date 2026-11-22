@@ -642,7 +642,7 @@
         "destructiveHint": false,
         "openWorldHint": false,
         "readOnlyHint": true,
-        "title": "Who may use the server's Anthropic key (admin)"
+        "title": "Who may use the server's AI key (admin)"
       },
       "description": "The default for everyone, and each person's choice: follow the default, may use the server's key, or must bring their own. Someone with their own key always uses it.",
       "inputSchema": {
@@ -665,7 +665,7 @@
       },
       "name": "admin_list_ai_access",
       "route": "GET /api/admin/ai-access",
-      "title": "Who may use the server's Anthropic key (admin)"
+      "title": "Who may use the server's AI key (admin)"
     },
     {
       "adminOnly": true,
@@ -1377,7 +1377,7 @@
         "destructiveHint": false,
         "openWorldHint": false,
         "readOnlyHint": false,
-        "title": "Set one person's use of the server's Anthropic key (admin)"
+        "title": "Set one person's use of the server's AI key (admin)"
       },
       "description": "Let one person use the server's key, make them bring their own, or have them follow the default.",
       "inputSchema": {
@@ -1406,7 +1406,7 @@
       },
       "name": "admin_set_ai_access",
       "route": "POST /api/admin/ai-access/{user_id}",
-      "title": "Set one person's use of the server's Anthropic key (admin)"
+      "title": "Set one person's use of the server's AI key (admin)"
     },
     {
       "adminOnly": true,
@@ -1414,7 +1414,7 @@
         "destructiveHint": false,
         "openWorldHint": false,
         "readOnlyHint": false,
-        "title": "Set one person's use of the server's Anthropic key, for many at once (admin)"
+        "title": "Set one person's use of the server's AI key, for many at once (admin)"
       },
       "description": "Runs admin_set_ai_access once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
       "inputSchema": {
@@ -1473,7 +1473,7 @@
       },
       "name": "admin_set_ai_access_bulk",
       "route": "POST /api/bulk/admin/ai-access",
-      "title": "Set one person's use of the server's Anthropic key, for many at once (admin)"
+      "title": "Set one person's use of the server's AI key, for many at once (admin)"
     },
     {
       "adminOnly": true,
@@ -1481,7 +1481,7 @@
         "destructiveHint": false,
         "openWorldHint": false,
         "readOnlyHint": false,
-        "title": "Set the default for the server's Anthropic key (admin)"
+        "title": "Set the default for the server's AI key (admin)"
       },
       "description": "Whether people without their own key may use the server's by default.",
       "inputSchema": {
@@ -1499,7 +1499,7 @@
       },
       "name": "admin_set_ai_default",
       "route": "POST /api/admin/ai-access",
-      "title": "Set the default for the server's Anthropic key (admin)"
+      "title": "Set the default for the server's AI key (admin)"
     },
     {
       "adminOnly": true,
@@ -2036,7 +2036,7 @@
         "readOnlyHint": true,
         "title": "Whether Smart Photo Extraction is ready for you"
       },
-      "description": "Whether your photos can be read, whose key they would go on (your own or the server's), and with which model.",
+      "description": "Whether your photos can be read, whose key they would go on (your own or the server's), and which service and model would read them.",
       "inputSchema": {
         "additionalProperties": false,
         "properties": {},
@@ -4120,7 +4120,7 @@
         "readOnlyHint": true,
         "title": "Your photo-reading settings"
       },
-      "description": "Whether you have your own Anthropic key (never the key itself), the model and effort you picked, whether you may use the server's key, and whose key your photos would go on now.",
+      "description": "Whether you have your own AI key (never the key itself) and for which service, the model and effort you picked, whether you may use the server's key, and whose key your photos would go on now.",
       "inputSchema": {
         "additionalProperties": false,
         "properties": {},

@@ -694,32 +694,37 @@
           </section>
 
           <!-- Only while the owner has auth.passwords on; see password.js. -->
-          <!-- Your own Anthropic key, model and effort for reading photos (my_ai.js). -->
+          <!-- Your own AI key, service, model and effort for reading photos (my_ai.js, ai_form.js). -->
           <section class="card" id="my-ai-panel" data-path="/account/ai" hidden>
             <div class="card-body">
               <h3 class="card-title" data-i18n="my_ai.heading"></h3>
               <p class="small" data-i18n="my_ai.text"></p>
               <p id="my-ai-state" class="small fw-semibold"></p>
               <form id="my-ai-form" class="row g-2 align-items-end">
-                <div class="col-12">
+                <div class="col-12 col-md-5">
+                  <label for="my-ai-provider" class="form-label" data-i18n="ai_form.provider_label"></label>
+                  <select id="my-ai-provider" class="form-select"></select>
+                </div>
+                <div class="col-12 col-md-7">
                   <label for="my-ai-key" class="form-label" data-i18n="my_ai.key_label"></label>
-                  <input id="my-ai-key" class="form-control" type="password" autocomplete="off" maxlength="300" data-no-track data-i18n-attr="placeholder:my_ai.key_placeholder" />
+                  <input id="my-ai-key" class="form-control" type="password" autocomplete="off" maxlength="300" data-no-track />
                 </div>
-                <div class="col-6 col-md-4">
-                  <label for="my-ai-model" class="form-label" data-i18n="my_ai.model_label"></label>
-                  <select id="my-ai-model" class="form-select"></select>
+                <div class="col-12 col-md-7">
+                  <label for="my-ai-model" class="form-label" data-i18n="ai_form.model_label"></label>
+                  <div class="input-group">
+                    <select id="my-ai-model" class="form-select"></select>
+                    <button id="my-ai-refresh" type="button" class="btn btn-outline-secondary" data-i18n-attr="title:ai_form.refresh,aria-label:ai_form.refresh"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i></button>
+                  </div>
                 </div>
-                <div class="col-6 col-md-4">
-                  <label for="my-ai-effort" class="form-label" data-i18n="my_ai.effort_label"></label>
-                  <select id="my-ai-effort" class="form-select">
-                    <option value="" data-i18n="my_ai.effort_app"></option>
-                    <option value="low" data-i18n="my_ai.effort_low"></option>
-                    <option value="medium" data-i18n="my_ai.effort_medium"></option>
-                    <option value="high" data-i18n="my_ai.effort_high"></option>
-                  </select>
+                <div class="col-12 col-md-5">
+                  <label for="my-ai-effort" class="form-label" data-i18n="ai_form.effort_label"></label>
+                  <select id="my-ai-effort" class="form-select"></select>
                 </div>
-                <div class="col-12 col-md-4 d-flex gap-2">
-                  <button type="submit" class="btn btn-primary flex-grow-1" data-i18n="my_ai.save"></button>
+                <div class="col-12">
+                  <p id="my-ai-models-note" class="form-text mb-0"></p>
+                </div>
+                <div class="col-12 d-flex gap-2">
+                  <button type="submit" class="btn btn-primary" data-i18n="my_ai.save"></button>
                   <button id="my-ai-remove" type="button" class="btn btn-outline-danger" data-i18n="my_ai.remove" hidden></button>
                 </div>
               </form>
@@ -1631,21 +1636,37 @@
         <section class="view" data-view="settings" data-path="/admin/settings" id="settings-panel" hidden>
           <h2 class="view-title" data-i18n="settings.heading"></h2>
           <p class="view-description" data-i18n="settings.description"></p>
-          <!-- The owner's Anthropic API key, for Smart Photo Extraction (ai_key.js). -->
+          <!-- The server's AI key, for Smart Photo Extraction (ai_key.js, ai_form.js). -->
           <section class="card" id="ai-key-card" data-path="/admin/settings/ai" hidden>
             <div class="card-body">
               <h3 class="card-title" data-i18n="ai.heading"></h3>
               <p class="small" data-i18n="ai.text"></p>
               <p id="ai-key-state" class="small fw-semibold"></p>
               <form id="ai-key-form" class="row g-2 align-items-end">
-                <div class="col-12 col-md-8">
-                  <label for="ai-key-input" class="form-label" data-i18n="ai.key_label"></label>
-                  <input id="ai-key-input" class="form-control" type="password" autocomplete="off" maxlength="300" data-no-track />
+                <div class="col-12 col-md-5">
+                  <label for="ai-key-provider" class="form-label" data-i18n="ai_form.provider_label"></label>
+                  <select id="ai-key-provider" class="form-select"></select>
                 </div>
-                <div class="col-6 col-md-2 d-grid">
+                <div class="col-12 col-md-7">
+                  <label for="ai-key-key" class="form-label" data-i18n="ai.key_label"></label>
+                  <input id="ai-key-key" class="form-control" type="password" autocomplete="off" maxlength="300" data-no-track />
+                </div>
+                <div class="col-12 col-md-7">
+                  <label for="ai-key-model" class="form-label" data-i18n="ai_form.model_label"></label>
+                  <div class="input-group">
+                    <select id="ai-key-model" class="form-select"></select>
+                    <button id="ai-key-refresh" type="button" class="btn btn-outline-secondary" data-i18n-attr="title:ai_form.refresh,aria-label:ai_form.refresh"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i></button>
+                  </div>
+                </div>
+                <div class="col-12 col-md-5">
+                  <label for="ai-key-effort" class="form-label" data-i18n="ai_form.effort_label"></label>
+                  <select id="ai-key-effort" class="form-select"></select>
+                </div>
+                <div class="col-12">
+                  <p id="ai-key-models-note" class="form-text mb-0"></p>
+                </div>
+                <div class="col-12 d-flex gap-2">
                   <button type="submit" class="btn btn-primary" data-i18n="ai.save"></button>
-                </div>
-                <div class="col-6 col-md-2 d-grid">
                   <button id="ai-key-remove" type="button" class="btn btn-outline-danger" data-i18n="ai.remove"></button>
                 </div>
               </form>
@@ -1801,6 +1822,7 @@
   <script src="/js/reports.js"></script>
   <script src="/js/households.js"></script>
   <script src="/js/trash.js"></script>
+  <script src="/js/ai_form.js"></script>
   <script src="/js/ai_key.js"></script>
   <script src="/js/my_ai.js"></script>
   <script src="/js/ai_access.js"></script>

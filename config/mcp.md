@@ -23,7 +23,7 @@ Every tool POST /mcp offers. Written by scripts/api_docs.sh from the registered 
 | [`admin_delete_user`](#admin_delete_user) | [`POST /api/admin/users/{user_id}/delete`](api.md#post-apiadminusersuser_iddelete) | admin keys | Delete an account (admin) |
 | [`admin_delete_user_bulk`](#admin_delete_user_bulk) | [`POST /api/bulk/admin/users/delete`](api.md#post-apibulkadminusersdelete) | admin keys | Delete an account, for many at once (admin) |
 | [`admin_get_theme_defaults`](#admin_get_theme_defaults) | [`GET /api/admin/theme-defaults`](api.md#get-apiadmintheme-defaults) | admin keys | Default themes (admin) |
-| [`admin_list_ai_access`](#admin_list_ai_access) | [`GET /api/admin/ai-access`](api.md#get-apiadminai-access) | admin keys | Who may use the server's Anthropic key (admin) |
+| [`admin_list_ai_access`](#admin_list_ai_access) | [`GET /api/admin/ai-access`](api.md#get-apiadminai-access) | admin keys | Who may use the server's AI key (admin) |
 | [`admin_list_files`](#admin_list_files) | [`GET /api/admin/files`](api.md#get-apiadminfiles) | admin keys | List everyone's files (admin) |
 | [`admin_list_invite_links`](#admin_list_invite_links) | [`GET /api/admin/invite-links`](api.md#get-apiadmininvite-links) | admin keys | List invite links (admin) |
 | [`admin_list_user_sessions`](#admin_list_user_sessions) | [`GET /api/admin/users/{user_id}/sessions`](api.md#get-apiadminusersuser_idsessions) | admin keys | An account's signed-in devices (admin) |
@@ -41,9 +41,9 @@ Every tool POST /mcp offers. Written by scripts/api_docs.sh from the registered 
 | [`admin_revoke_invite_link_bulk`](#admin_revoke_invite_link_bulk) | [`POST /api/bulk/admin/invite-links/revoke`](api.md#post-apibulkadmininvite-linksrevoke) | admin keys | Switch off an invite link, for many at once (admin) |
 | [`admin_revoke_user_session`](#admin_revoke_user_session) | [`POST /api/admin/users/{user_id}/sessions/{session_id}/revoke`](api.md#post-apiadminusersuser_idsessionssession_idrevoke) | admin keys | Sign out one of an account's devices (admin) |
 | [`admin_revoke_user_session_bulk`](#admin_revoke_user_session_bulk) | [`POST /api/bulk/admin/users/sessions/revoke`](api.md#post-apibulkadminuserssessionsrevoke) | admin keys | Sign out one of an account's devices, for many at once (admin) |
-| [`admin_set_ai_access`](#admin_set_ai_access) | [`POST /api/admin/ai-access/{user_id}`](api.md#post-apiadminai-accessuser_id) | admin keys | Set one person's use of the server's Anthropic key (admin) |
-| [`admin_set_ai_access_bulk`](#admin_set_ai_access_bulk) | [`POST /api/bulk/admin/ai-access`](api.md#post-apibulkadminai-access) | admin keys | Set one person's use of the server's Anthropic key, for many at once (admin) |
-| [`admin_set_ai_default`](#admin_set_ai_default) | [`POST /api/admin/ai-access`](api.md#post-apiadminai-access) | admin keys | Set the default for the server's Anthropic key (admin) |
+| [`admin_set_ai_access`](#admin_set_ai_access) | [`POST /api/admin/ai-access/{user_id}`](api.md#post-apiadminai-accessuser_id) | admin keys | Set one person's use of the server's AI key (admin) |
+| [`admin_set_ai_access_bulk`](#admin_set_ai_access_bulk) | [`POST /api/bulk/admin/ai-access`](api.md#post-apibulkadminai-access) | admin keys | Set one person's use of the server's AI key, for many at once (admin) |
+| [`admin_set_ai_default`](#admin_set_ai_default) | [`POST /api/admin/ai-access`](api.md#post-apiadminai-access) | admin keys | Set the default for the server's AI key (admin) |
 | [`admin_set_invite_link_limits`](#admin_set_invite_link_limits) | [`POST /api/admin/invite-links/{link_id}/limits`](api.md#post-apiadmininvite-linkslink_idlimits) | admin keys | Change an invite link's places and expiry (admin) |
 | [`admin_set_theme_defaults`](#admin_set_theme_defaults) | [`POST /api/admin/theme-defaults`](api.md#post-apiadmintheme-defaults) | admin keys | Replace the default themes (admin) |
 | [`admin_set_user_disabled`](#admin_set_user_disabled) | [`POST /api/admin/users/{user_id}/disabled`](api.md#post-apiadminusersuser_iddisabled) | admin keys | Disable or enable a user (admin) |
@@ -898,7 +898,7 @@ Runs admin_switch_on_invite_link once per item: items holds each call's argument
 
 ## ai_status
 
-Whether your photos can be read, whose key they would go on (your own or the server's), and with which model.
+Whether your photos can be read, whose key they would go on (your own or the server's), and which service and model would read them.
 
 |  |  |
 |---|---|
@@ -1780,7 +1780,7 @@ Runs move_item once per item: items holds each call's arguments, shared the argu
 
 ## my_ai_settings
 
-Whether you have your own Anthropic key (never the key itself), the model and effort you picked, whether you may use the server's key, and whose key your photos would go on now.
+Whether you have your own AI key (never the key itself) and for which service, the model and effort you picked, whether you may use the server's key, and whose key your photos would go on now.
 
 |  |  |
 |---|---|

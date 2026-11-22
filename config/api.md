@@ -4905,23 +4905,25 @@ Take a location back out of Trash.
 | Method | Path | Summary | Who may call |
 |---|---|---|---|
 | GET | [`/api/account/ai`](#get-apiaccountai) | Your photo-reading settings | browser session or API key, anyone signed in |
-| POST | [`/api/account/ai`](#post-apiaccountai) | Set your own key, model and effort | browser session only, anyone signed in |
-| GET | [`/api/admin/ai-access`](#get-apiadminai-access) | Who may use the server's Anthropic key | browser session or API key, admins |
-| POST | [`/api/admin/ai-access`](#post-apiadminai-access) | Set the default for the server's Anthropic key | browser session or API key, admins |
-| POST | [`/api/admin/ai-access/{user_id}`](#post-apiadminai-accessuser_id) | Set one person's use of the server's Anthropic key | browser session or API key, admins |
+| POST | [`/api/account/ai`](#post-apiaccountai) | Set your own key, service, model and effort | browser session only, anyone signed in |
+| POST | [`/api/account/ai/models`](#post-apiaccountaimodels) | Load a service's model list | browser session only, anyone signed in |
+| GET | [`/api/admin/ai-access`](#get-apiadminai-access) | Who may use the server's AI key | browser session or API key, admins |
+| POST | [`/api/admin/ai-access`](#post-apiadminai-access) | Set the default for the server's AI key | browser session or API key, admins |
+| POST | [`/api/admin/ai-access/{user_id}`](#post-apiadminai-accessuser_id) | Set one person's use of the server's AI key | browser session or API key, admins |
 | GET | [`/api/ai`](#get-apiai) | Whether Smart Photo Extraction is ready for you | browser session or API key, anyone signed in |
-| POST | [`/api/bulk/admin/ai-access`](#post-apibulkadminai-access) | Set one person's use of the server's Anthropic key, for many at once | browser session or API key, admins |
+| POST | [`/api/bulk/admin/ai-access`](#post-apibulkadminai-access) | Set one person's use of the server's AI key, for many at once | browser session or API key, admins |
 | GET | [`/api/households/{household_id}/extractions/{extraction_id}`](#get-apihouseholdshousehold_idextractionsextraction_id) | A photo draft | browser session or API key, anyone signed in |
 | POST | [`/api/households/{household_id}/extractions/{extraction_id}/accept`](#post-apihouseholdshousehold_idextractionsextraction_idaccept) | Save a photo draft's items | browser session or API key, anyone signed in |
 | POST | [`/api/households/{household_id}/labels/{label_id}/extract`](#post-apihouseholdshousehold_idlabelslabel_idextract) | Read a photo of a container's contents | browser session or API key, anyone signed in |
-| GET | [`/api/owner/ai`](#get-apiownerai) | The Anthropic API key, as far as it can be shown | browser session only, the owner |
-| POST | [`/api/owner/ai`](#post-apiownerai) | Set or remove the Anthropic API key | browser session only, the owner |
+| GET | [`/api/owner/ai`](#get-apiownerai) | The server's AI key, as far as it can be shown | browser session only, the owner |
+| POST | [`/api/owner/ai`](#post-apiownerai) | Set the server's AI key, service, model and effort | browser session only, the owner |
+| POST | [`/api/owner/ai/models`](#post-apiowneraimodels) | Load a service's model list for the server's key | browser session only, the owner |
 
 ### GET /api/account/ai
 
 Your photo-reading settings
 
-Whether you have your own Anthropic key (never the key itself), the model and effort you picked, whether you may use the server's key, and whose key your photos would go on now.
+Whether you have your own AI key (never the key itself) and for which service, the model and effort you picked, whether you may use the server's key, and whose key your photos would go on now.
 
 |  |  |
 |---|---|
@@ -4933,28 +4935,33 @@ Whether you have your own Anthropic key (never the key itself), the model and ef
 
 | Field | Type | Required | Limits | Description |
 |---|---|---|---|---|
-| `app_effort` | string | yes |  |  |
-| `app_model` | string | yes |  | The app's model, used with the server's key. |
 | `daily_limit` | integer | yes |  | Photos one household may send a day with the server's key. |
-| `effort` | string | yes |  |  |
+| `effort` | string | yes |  | Empty is the model's own. |
 | `enabled` | boolean | yes |  | ai.enabled in the settings. |
 | `key_set` | boolean | yes |  | The server has a key of its own. |
 | `last4` | string | yes |  | Your key's last four characters, to tell keys apart. |
-| `model` | string | yes |  | The model your photos would be read with. |
-| `models` | array of string | yes |  | The models you may pick, cheapest first. |
-| `own_effort` | string | yes |  | The effort you picked for your own key; empty uses the app's. |
+| `model` | string | yes |  | The model your photos would be read with; empty until one is picked or a model list is loaded. |
+| `models_error` | string | no |  | Why the model list could not be loaded, when a save tried. |
+| `own_effort` | string | yes |  | The effort you picked for your own key; empty is the default. |
 | `own_key_set` | boolean | yes |  | You have a key of your own set. |
-| `own_model` | string | yes |  | The model you picked for your own key; empty uses the app's. |
+| `own_model` | string | yes |  | The model you picked for your own key; empty is the default. |
+| `own_provider` | string | yes |  | The service your own key is for (or will be, once you add one). |
+| `provider` | string | yes |  | The service your photos would go to: anthropic, openai, gemini, xai or openrouter. |
+| `provider_name` | string | yes |  |  |
+| `providers` | array of [`AIProvider`](#aiprovider) | yes |  |  |
 | `ready` | boolean | yes |  | Your photos can be read: switched on, and there is a key you may use. |
+| `server_effort` | string | yes |  |  |
+| `server_model` | string | yes |  | The model the server's key reads photos with: the default for your own key on the same service. |
+| `server_provider` | string | yes |  | The service the server's key is for. |
 | `set_at` | string (date-time) or null | yes |  |  |
 | `shared_allowed` | boolean | yes |  | You may use the server's key when you have none of your own. |
 | `using` | string | yes | one of `own`, `shared`, `none` | Whose key your photos would go on: your own, the server's, or none you may use. |
 
 ### POST /api/account/ai
 
-Set your own key, model and effort
+Set your own key, service, model and effort
 
-Store your own Anthropic API key, sealed and never shown again, or remove it; and pick the model and effort your own key uses. Only what you send changes.
+Store your own AI key for one service, sealed and never shown again, or remove it; and pick the model and effort your own key uses. Only what you send changes. A new key also loads that service's model list.
 
 |  |  |
 |---|---|
@@ -4965,36 +4972,87 @@ Store your own Anthropic API key, sealed and never shown again, or remove it; an
 
 | Field | Type | Required | Limits | Description |
 |---|---|---|---|---|
-| `api_key` | string or null | no | at most 300 characters | Your own Anthropic API key (sk-ant-...). Leave out to keep the one you have. |
+| `api_key` | string or null | no | at most 300 characters | Your own key for that service. Leave out to keep the one you have. |
 | `csrf_token` | string | no |  | From GET /api/me. Browser sessions only. |
-| `effort` | string or null | no | one of ``, `low`, `medium`, `high` | The effort for your own key; empty uses the app's. |
-| `model` | string or null | no | one of ``, `claude-haiku-5-5`, `claude-sonnet-5-5`, `claude-opus-5-5` | The model for your own key; empty uses the app's. |
+| `effort` | string or null | no | at most 20 characters | One of the service's efforts; empty is the default. |
+| `model` | string or null | no | at most 128 characters | The model for your own key; empty is the default. |
+| `provider` | string or null | no | one of `anthropic`, `openai`, `gemini`, `xai`, `openrouter` | The service your key is for. Changing it needs a key for the new one. |
 | `remove_key` | boolean | no |  | Take your own key away. |
 
 **Reply 200**: Success
 
 | Field | Type | Required | Limits | Description |
 |---|---|---|---|---|
-| `app_effort` | string | yes |  |  |
-| `app_model` | string | yes |  | The app's model, used with the server's key. |
 | `daily_limit` | integer | yes |  | Photos one household may send a day with the server's key. |
-| `effort` | string | yes |  |  |
+| `effort` | string | yes |  | Empty is the model's own. |
 | `enabled` | boolean | yes |  | ai.enabled in the settings. |
 | `key_set` | boolean | yes |  | The server has a key of its own. |
 | `last4` | string | yes |  | Your key's last four characters, to tell keys apart. |
-| `model` | string | yes |  | The model your photos would be read with. |
-| `models` | array of string | yes |  | The models you may pick, cheapest first. |
-| `own_effort` | string | yes |  | The effort you picked for your own key; empty uses the app's. |
+| `model` | string | yes |  | The model your photos would be read with; empty until one is picked or a model list is loaded. |
+| `models_error` | string | no |  | Why the model list could not be loaded, when a save tried. |
+| `own_effort` | string | yes |  | The effort you picked for your own key; empty is the default. |
 | `own_key_set` | boolean | yes |  | You have a key of your own set. |
-| `own_model` | string | yes |  | The model you picked for your own key; empty uses the app's. |
+| `own_model` | string | yes |  | The model you picked for your own key; empty is the default. |
+| `own_provider` | string | yes |  | The service your own key is for (or will be, once you add one). |
+| `provider` | string | yes |  | The service your photos would go to: anthropic, openai, gemini, xai or openrouter. |
+| `provider_name` | string | yes |  |  |
+| `providers` | array of [`AIProvider`](#aiprovider) | yes |  |  |
 | `ready` | boolean | yes |  | Your photos can be read: switched on, and there is a key you may use. |
+| `server_effort` | string | yes |  |  |
+| `server_model` | string | yes |  | The model the server's key reads photos with: the default for your own key on the same service. |
+| `server_provider` | string | yes |  | The service the server's key is for. |
+| `set_at` | string (date-time) or null | yes |  |  |
+| `shared_allowed` | boolean | yes |  | You may use the server's key when you have none of your own. |
+| `using` | string | yes | one of `own`, `shared`, `none` | Whose key your photos would go on: your own, the server's, or none you may use. |
+
+### POST /api/account/ai/models
+
+Load a service's model list
+
+Ask a service which of its models can read photos, and which efforts they take, with the key you typed (not stored) or your saved one, and keep the list for the screens.
+
+|  |  |
+|---|---|
+| Who may call | browser session only, anyone signed in |
+| Errors | 400, 401, 403, 429, 503 |
+
+**Request body**
+
+| Field | Type | Required | Limits | Description |
+|---|---|---|---|---|
+| `api_key` | string or null | no | at most 300 characters | A key to ask with, not stored. Leave out to use the saved key, when it is for this service. |
+| `csrf_token` | string | no |  | From GET /api/me. Browser sessions only. |
+| `provider` | string | yes | one of `anthropic`, `openai`, `gemini`, `xai`, `openrouter` |  |
+
+**Reply 200**: Success
+
+| Field | Type | Required | Limits | Description |
+|---|---|---|---|---|
+| `daily_limit` | integer | yes |  | Photos one household may send a day with the server's key. |
+| `effort` | string | yes |  | Empty is the model's own. |
+| `enabled` | boolean | yes |  | ai.enabled in the settings. |
+| `key_set` | boolean | yes |  | The server has a key of its own. |
+| `last4` | string | yes |  | Your key's last four characters, to tell keys apart. |
+| `model` | string | yes |  | The model your photos would be read with; empty until one is picked or a model list is loaded. |
+| `models_error` | string | no |  | Why the model list could not be loaded, when a save tried. |
+| `own_effort` | string | yes |  | The effort you picked for your own key; empty is the default. |
+| `own_key_set` | boolean | yes |  | You have a key of your own set. |
+| `own_model` | string | yes |  | The model you picked for your own key; empty is the default. |
+| `own_provider` | string | yes |  | The service your own key is for (or will be, once you add one). |
+| `provider` | string | yes |  | The service your photos would go to: anthropic, openai, gemini, xai or openrouter. |
+| `provider_name` | string | yes |  |  |
+| `providers` | array of [`AIProvider`](#aiprovider) | yes |  |  |
+| `ready` | boolean | yes |  | Your photos can be read: switched on, and there is a key you may use. |
+| `server_effort` | string | yes |  |  |
+| `server_model` | string | yes |  | The model the server's key reads photos with: the default for your own key on the same service. |
+| `server_provider` | string | yes |  | The service the server's key is for. |
 | `set_at` | string (date-time) or null | yes |  |  |
 | `shared_allowed` | boolean | yes |  | You may use the server's key when you have none of your own. |
 | `using` | string | yes | one of `own`, `shared`, `none` | Whose key your photos would go on: your own, the server's, or none you may use. |
 
 ### GET /api/admin/ai-access
 
-Who may use the server's Anthropic key
+Who may use the server's AI key
 
 The default for everyone, and each person's choice: follow the default, may use the server's key, or must bring their own. Someone with their own key always uses it.
 
@@ -5023,7 +5081,7 @@ The default for everyone, and each person's choice: follow the default, may use 
 
 ### POST /api/admin/ai-access
 
-Set the default for the server's Anthropic key
+Set the default for the server's AI key
 
 Whether people without their own key may use the server's by default.
 
@@ -5052,7 +5110,7 @@ Whether people without their own key may use the server's by default.
 
 ### POST /api/admin/ai-access/{user_id}
 
-Set one person's use of the server's Anthropic key
+Set one person's use of the server's AI key
 
 Let one person use the server's key, make them bring their own, or have them follow the default.
 
@@ -5089,7 +5147,7 @@ Let one person use the server's key, make them bring their own, or have them fol
 
 Whether Smart Photo Extraction is ready for you
 
-Whether your photos can be read, whose key they would go on (your own or the server's), and with which model.
+Whether your photos can be read, whose key they would go on (your own or the server's), and which service and model would read them.
 
 |  |  |
 |---|---|
@@ -5102,16 +5160,18 @@ Whether your photos can be read, whose key they would go on (your own or the ser
 | Field | Type | Required | Limits | Description |
 |---|---|---|---|---|
 | `daily_limit` | integer | yes |  | Photos one household may send a day with the server's key. |
-| `effort` | string | yes |  |  |
+| `effort` | string | yes |  | Empty is the model's own. |
 | `enabled` | boolean | yes |  | ai.enabled in the settings. |
 | `key_set` | boolean | yes |  | The server has a key of its own. |
-| `model` | string | yes |  | The model your photos would be read with. |
+| `model` | string | yes |  | The model your photos would be read with; empty until one is picked or a model list is loaded. |
+| `provider` | string | yes |  | The service your photos would go to: anthropic, openai, gemini, xai or openrouter. |
+| `provider_name` | string | yes |  |  |
 | `ready` | boolean | yes |  | Your photos can be read: switched on, and there is a key you may use. |
 | `using` | string | yes | one of `own`, `shared`, `none` | Whose key your photos would go on: your own, the server's, or none you may use. |
 
 ### POST /api/bulk/admin/ai-access
 
-Set one person's use of the server's Anthropic key, for many at once
+Set one person's use of the server's AI key, for many at once
 
 Runs POST /api/admin/ai-access/{user_id} once per item: items holds each one's id and fields, shared the fields they have in common (an item's own win). Each runs as that route would, in order, and one failing does not stop the rest; the reply says how each went. At most 100 items.
 
@@ -5243,9 +5303,9 @@ Ask Claude to list the items in an uploaded top-down photo, with your own API ke
 
 ### GET /api/owner/ai
 
-The Anthropic API key, as far as it can be shown
+The server's AI key, as far as it can be shown
 
-Whether an API key is set, its last four characters and when it was set. The key itself is never shown again.
+Which service the server's key is for, its last four characters and when it was set, the model and effort it reads photos with, and every service with its model list. The key itself is never shown again.
 
 |  |  |
 |---|---|
@@ -5256,21 +5316,29 @@ Whether an API key is set, its last four characters and when it was set. The key
 
 | Field | Type | Required | Limits | Description |
 |---|---|---|---|---|
+| `app_effort` | string | yes |  |  |
+| `app_model` | string | yes |  | config.yaml's ai.model, the default when the server's key is Anthropic's. |
+| `chosen_effort` | string | yes |  | The effort picked; empty is the default (effort above). |
+| `chosen_model` | string | yes |  | The model picked for the server's key; empty is the default (model above). |
 | `daily_limit` | integer | yes |  | Photos one household may send a day with the server's key. |
-| `effort` | string | yes |  |  |
+| `effort` | string | yes |  | Empty is the model's own. |
 | `enabled` | boolean | yes |  | ai.enabled in the settings. |
 | `key_set` | boolean | yes |  | The server has a key of its own. |
 | `last4` | string | yes |  | The key's last four characters, to tell keys apart. |
-| `model` | string | yes |  | The model your photos would be read with. |
+| `model` | string | yes |  | The model your photos would be read with; empty until one is picked or a model list is loaded. |
+| `models_error` | string | no |  | Why the model list could not be loaded, when a save or refresh tried. |
+| `provider` | string | yes |  | The service your photos would go to: anthropic, openai, gemini, xai or openrouter. |
+| `provider_name` | string | yes |  |  |
+| `providers` | array of [`AIProvider`](#aiprovider) | yes |  |  |
 | `ready` | boolean | yes |  | Your photos can be read: switched on, and there is a key you may use. |
 | `set_at` | string (date-time) or null | yes |  |  |
 | `using` | string | yes | one of `own`, `shared`, `none` | Whose key your photos would go on: your own, the server's, or none you may use. |
 
 ### POST /api/owner/ai
 
-Set or remove the Anthropic API key
+Set the server's AI key, service, model and effort
 
-Store the API key Smart Photo Extraction uses, sealed in the database, or remove it with an empty value. It is never shown again.
+Store the key Smart Photo Extraction uses, sealed in the database, for one service, or remove it; and pick the model and effort. Only what you send changes. A new key also loads that service's model list.
 
 |  |  |
 |---|---|
@@ -5281,19 +5349,72 @@ Store the API key Smart Photo Extraction uses, sealed in the database, or remove
 
 | Field | Type | Required | Limits | Description |
 |---|---|---|---|---|
-| `api_key` | string | yes | at most 300 characters | An Anthropic API key (sk-ant-...), or empty to remove it. |
+| `api_key` | string or null | no | at most 300 characters | A key for that service. Leave out to keep the one there is. |
 | `csrf_token` | string | no |  | From GET /api/me. Browser sessions only. |
+| `effort` | string or null | no | at most 20 characters | One of the service's efforts; empty is the default. |
+| `model` | string or null | no | at most 128 characters | The model; empty is the default. |
+| `provider` | string or null | no | one of `anthropic`, `openai`, `gemini`, `xai`, `openrouter` | The service the key is for. Changing it needs a key for the new one. |
+| `remove_key` | boolean | no |  | Take the server's key away. |
 
 **Reply 200**: Success
 
 | Field | Type | Required | Limits | Description |
 |---|---|---|---|---|
+| `app_effort` | string | yes |  |  |
+| `app_model` | string | yes |  | config.yaml's ai.model, the default when the server's key is Anthropic's. |
+| `chosen_effort` | string | yes |  | The effort picked; empty is the default (effort above). |
+| `chosen_model` | string | yes |  | The model picked for the server's key; empty is the default (model above). |
 | `daily_limit` | integer | yes |  | Photos one household may send a day with the server's key. |
-| `effort` | string | yes |  |  |
+| `effort` | string | yes |  | Empty is the model's own. |
 | `enabled` | boolean | yes |  | ai.enabled in the settings. |
 | `key_set` | boolean | yes |  | The server has a key of its own. |
 | `last4` | string | yes |  | The key's last four characters, to tell keys apart. |
-| `model` | string | yes |  | The model your photos would be read with. |
+| `model` | string | yes |  | The model your photos would be read with; empty until one is picked or a model list is loaded. |
+| `models_error` | string | no |  | Why the model list could not be loaded, when a save or refresh tried. |
+| `provider` | string | yes |  | The service your photos would go to: anthropic, openai, gemini, xai or openrouter. |
+| `provider_name` | string | yes |  |  |
+| `providers` | array of [`AIProvider`](#aiprovider) | yes |  |  |
+| `ready` | boolean | yes |  | Your photos can be read: switched on, and there is a key you may use. |
+| `set_at` | string (date-time) or null | yes |  |  |
+| `using` | string | yes | one of `own`, `shared`, `none` | Whose key your photos would go on: your own, the server's, or none you may use. |
+
+### POST /api/owner/ai/models
+
+Load a service's model list for the server's key
+
+Ask a service which of its models can read photos, and which efforts they take, and keep the list for the screens.
+
+|  |  |
+|---|---|
+| Who may call | browser session only, the owner |
+| Errors | 400, 403, 404, 429, 503 |
+
+**Request body**
+
+| Field | Type | Required | Limits | Description |
+|---|---|---|---|---|
+| `api_key` | string or null | no | at most 300 characters | A key to ask with, not stored. Leave out to use the saved key, when it is for this service. |
+| `csrf_token` | string | no |  | From GET /api/me. Browser sessions only. |
+| `provider` | string | yes | one of `anthropic`, `openai`, `gemini`, `xai`, `openrouter` |  |
+
+**Reply 200**: Success
+
+| Field | Type | Required | Limits | Description |
+|---|---|---|---|---|
+| `app_effort` | string | yes |  |  |
+| `app_model` | string | yes |  | config.yaml's ai.model, the default when the server's key is Anthropic's. |
+| `chosen_effort` | string | yes |  | The effort picked; empty is the default (effort above). |
+| `chosen_model` | string | yes |  | The model picked for the server's key; empty is the default (model above). |
+| `daily_limit` | integer | yes |  | Photos one household may send a day with the server's key. |
+| `effort` | string | yes |  | Empty is the model's own. |
+| `enabled` | boolean | yes |  | ai.enabled in the settings. |
+| `key_set` | boolean | yes |  | The server has a key of its own. |
+| `last4` | string | yes |  | The key's last four characters, to tell keys apart. |
+| `model` | string | yes |  | The model your photos would be read with; empty until one is picked or a model list is loaded. |
+| `models_error` | string | no |  | Why the model list could not be loaded, when a save or refresh tried. |
+| `provider` | string | yes |  | The service your photos would go to: anthropic, openai, gemini, xai or openrouter. |
+| `provider_name` | string | yes |  |  |
+| `providers` | array of [`AIProvider`](#aiprovider) | yes |  |  |
 | `ready` | boolean | yes |  | Your photos can be read: switched on, and there is a key you may use. |
 | `set_at` | string (date-time) or null | yes |  |  |
 | `using` | string | yes | one of `own`, `shared`, `none` | Whose key your photos would go on: your own, the server's, or none you may use. |
@@ -5595,6 +5716,23 @@ The shapes the routes above refer to by name.
 | `own_key_set` | boolean | yes |  | They have a key of their own, which they always use first. |
 | `owner` | boolean | yes |  | The owner, who may always use the server's key. |
 | `user_id` | integer | yes |  |  |
+
+### AIProvider
+
+| Field | Type | Required | Limits | Description |
+|---|---|---|---|---|
+| `default_effort` | string | yes |  | The effort an unpicked effort means; empty is the model's own. |
+| `default_model` | string | yes |  | The model an unpicked model means; empty when there is none yet (load the list). |
+| `efforts` | array of string | yes |  | The effort levels it takes, least first. |
+| `id` | string | yes |  | anthropic, openai, gemini, xai or openrouter. |
+| `key_hint` | string | yes |  | How its keys start. |
+| `keys_url` | string | yes |  | Where to get a key. |
+| `models` | array of object | yes |  | Its models that read photos, from the last refresh. A model's efforts are null when the service does not say, empty when it takes none. |
+| `models[].efforts` | array of string | yes |  |  |
+| `models[].id` | string | yes |  |  |
+| `models[].name` | string | yes |  |  |
+| `name` | string | yes |  |  |
+| `refreshed_at` | string (date-time) or null | yes |  | When the list was last loaded from the service; null is the app's built-in list. |
 
 ### APIKey
 

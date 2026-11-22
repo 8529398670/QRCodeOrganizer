@@ -291,13 +291,15 @@ inventory:
   # item says otherwise. 0 = on the day itself.
   reminder_days: 7                 # [live]
 
-# Smart Photo Extraction: one top-down photo of a container's contents, and
-# Claude lists the items in it for you to check. It needs an Anthropic API key,
-# which the owner sets on this screen (it is kept sealed in the database, never
-# here). Each photo costs a few cents.
+# Smart Photo Extraction: one top-down photo of a container's contents, and an
+# AI model lists the items in it for you to check. It needs an API key from
+# Anthropic, OpenAI, Google (Gemini), xAI (Grok) or OpenRouter, which the
+# owner sets on this screen along with the model and effort (the key is kept
+# sealed in the database, never here). Each photo costs a few cents.
 ai:
   enabled: true                    # [live]
-  # The Claude model that reads the photos.
+  # The Claude model and effort that read the photos when the server's key is
+  # Anthropic's and the Settings screen leaves them on "Default".
   model: claude-opus-5-5           # [live]
   # low, medium or high: more is slower and costs more, for a closer look.
   effort: low                      # [live]
