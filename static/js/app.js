@@ -196,7 +196,7 @@ const App = {
     const loading = [];
     // The organizer: the household first, since every screen of it reads it.
     ItemEditor.init();
-    [ Scan , Inventory , Labels , Container , Locations , Print , Reminders , Reports , Households , Trash ].forEach( ( screen ) => screen.init() );
+    [ Onboarding , Scan , Inventory , Labels , Container , Locations , Print , Reminders , Reports , Households , Trash ].forEach( ( screen ) => screen.init() );
     loading.push( Org.init( me ) );
     AiKey.init( me );
     MyAi.init( me );
