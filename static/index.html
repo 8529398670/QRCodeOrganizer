@@ -1,0 +1,1809 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light" />
+  <title data-i18n="app.title">&nbsp;</title>
+  <link rel="icon" href="/favicon.ico" />
+  <!-- Before the stylesheets paint, so a saved dark theme never flashes light. -->
+  <script src="/js/theme.js"></script>
+  <!-- Bootstrap 5 and its icon font, vendored (see /vendor/README.md), then
+       this app's overrides on top. -->
+  <link rel="stylesheet" href="/vendor/bootstrap.min.css" />
+  <link rel="stylesheet" href="/vendor/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <a id="skip-link" href="#main" class="visually-hidden-focusable" data-i18n="nav.skip"></a>
+  <!--
+    No text is hardcoded here. Every visible string carries a data-i18n key
+    that server/language resolves from language.yaml at runtime, so the copy
+    can change (or be removed entirely) without editing this file.
+
+    data-i18n replaces an element's text, so wherever an icon sits next to a
+    label the key goes on an inner <span>, never on the element holding both.
+  -->
+  <nav class="navbar app-navbar border-bottom sticky-top" data-i18n-attr="aria-label:nav.top_label">
+    <div class="container-fluid gap-2">
+      <!-- The menu button, left, beside the sidebar it controls: on a phone it
+           slides the sidebar in, on a wide screen it collapses and expands it
+           (remembered in this browser). See Nav.toggleSidebar. -->
+      <button id="sidebar-toggle" class="btn btn-link app-icon-button" type="button"
+              aria-controls="sidebar" data-i18n-attr="aria-label:nav.menu,title:nav.menu" hidden>
+        <i class="bi bi-list" aria-hidden="true"></i>
+      </button>
+      <!-- The app's name is the way home, from any screen. -->
+      <a href="/" class="navbar-brand fw-semibold me-auto" data-i18n="app.title"></a>
+      <span class="navbar-text small d-none d-md-inline" data-i18n="app.tagline"></span>
+      <div id="app-nav" class="d-flex align-items-center gap-2" hidden>
+        <!-- The app's own top-level links go here. Your account is in the
+             sidebar, not up here. -->
+      </div>
+    </div>
+  </nav>
+
+  <div class="app-shell">
+    <!--
+      Every signed-in screen is one entry here and one data-view section in
+      <main>. nav.js shows the one the URL hash names, and hides an entry
+      whose section the app left hidden (admin-only, switched off, ...).
+      offcanvas-lg: a slide-in panel on a phone, a fixed column from lg up.
+    -->
+    <aside id="sidebar" class="offcanvas-lg offcanvas-start app-sidebar" tabindex="-1" aria-labelledby="sidebar-title" hidden>
+      <div class="offcanvas-header border-bottom">
+        <h2 class="offcanvas-title h5" id="sidebar-title" data-i18n="app.title"></h2>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar"
+                data-i18n-attr="aria-label:nav.close"></button>
+      </div>
+      <div class="offcanvas-body">
+        <nav id="sidebar-nav" class="nav nav-pills flex-column w-100 gap-1" data-i18n-attr="aria-label:nav.sidebar_label">
+          <!-- The organizer, first: which household, then its screens. -->
+          <div id="sidebar-org" class="sidebar-group" hidden>
+            <label for="household-select" class="sidebar-heading" data-i18n="org.household_label"></label>
+            <select id="household-select" class="form-select form-select-sm mb-2"></select>
+            <a class="nav-link" href="/scan" data-nav="scan"><i class="bi bi-qr-code-scan" aria-hidden="true"></i><span data-i18n="nav.scan"></span></a>
+            <a class="nav-link" href="/inventory" data-nav="inventory"><i class="bi bi-search" aria-hidden="true"></i><span data-i18n="nav.inventory"></span></a>
+            <a class="nav-link" href="/labels" data-nav="labels"><i class="bi bi-box-seam" aria-hidden="true"></i><span data-i18n="nav.labels"></span></a>
+            <a class="nav-link" href="/locations" data-nav="locations"><i class="bi bi-geo-alt" aria-hidden="true"></i><span data-i18n="nav.locations"></span></a>
+            <a class="nav-link" href="/print" data-nav="print"><i class="bi bi-printer" aria-hidden="true"></i><span data-i18n="nav.print"></span></a>
+            <a class="nav-link" href="/reminders" data-nav="reminders"><i class="bi bi-bell" aria-hidden="true"></i><span data-i18n="nav.reminders"></span><span id="reminders-badge" class="badge text-bg-danger ms-auto" hidden></span></a>
+            <a class="nav-link" href="/reports" data-nav="reports"><i class="bi bi-bar-chart" aria-hidden="true"></i><span data-i18n="nav.reports"></span></a>
+            <a class="nav-link" href="/households" data-nav="households"><i class="bi bi-house-heart" aria-hidden="true"></i><span data-i18n="nav.households"></span></a>
+            <a class="nav-link" href="/trash" data-nav="trash"><i class="bi bi-trash3" aria-hidden="true"></i><span data-i18n="nav.trash"></span></a>
+            <h3 class="sidebar-heading" data-i18n="nav.you_heading"></h3>
+          </div>
+          <!-- Account, first: its second line names who is signed in (App.labelAccount). -->
+          <a class="nav-link" href="/account" data-nav="account"><i class="bi bi-person-circle" aria-hidden="true"></i><span class="nav-link-text"><span data-i18n="nav.account"></span><span id="sidebar-user" class="nav-link-sub"></span></span></a>
+          <a class="nav-link" href="/appearance" data-nav="appearance"><i class="bi bi-palette" aria-hidden="true"></i><span data-i18n="nav.appearance"></span></a>
+          <a class="nav-link" href="/shortcuts" data-nav="shortcuts"><i class="bi bi-keyboard" aria-hidden="true"></i><span data-i18n="nav.shortcuts"></span></a>
+          <a class="nav-link" href="/files" data-nav="files"><i class="bi bi-folder" aria-hidden="true"></i><span data-i18n="nav.files"></span></a>
+          <a class="nav-link" href="/about" data-nav="about"><i class="bi bi-info-circle" aria-hidden="true"></i><span data-i18n="nav.about"></span></a>
+
+          <div id="sidebar-admin" class="sidebar-group" hidden>
+            <h3 class="sidebar-heading" data-i18n="nav.admin_heading"></h3>
+            <a class="nav-link" href="/admin/users" data-nav="users"><i class="bi bi-people" aria-hidden="true"></i><span data-i18n="nav.users"></span></a>
+            <a class="nav-link" href="/admin/invite-links" data-nav="invite-links"><i class="bi bi-link-45deg" aria-hidden="true"></i><span data-i18n="nav.invite_links"></span></a>
+            <a class="nav-link" href="/admin/api-keys" data-nav="all-keys"><i class="bi bi-shield-lock" aria-hidden="true"></i><span data-i18n="nav.all_keys"></span></a>
+            <a class="nav-link" href="/admin/logs" data-nav="logs"><i class="bi bi-journal-text" aria-hidden="true"></i><span data-i18n="nav.logs"></span></a>
+            <a class="nav-link" href="/admin/jobs" data-nav="jobs"><i class="bi bi-clock-history" aria-hidden="true"></i><span data-i18n="nav.jobs"></span></a>
+            <a class="nav-link" href="/admin/webhooks" data-nav="webhooks"><i class="bi bi-broadcast" aria-hidden="true"></i><span data-i18n="nav.webhooks"></span></a>
+            <a class="nav-link" href="/admin/settings" data-nav="settings"><i class="bi bi-sliders" aria-hidden="true"></i><span data-i18n="nav.settings"></span></a>
+          </div>
+          <p id="sidebar-version" class="sidebar-version" hidden></p>
+        </nav>
+      </div>
+    </aside>
+
+    <main hidden id="main" class="app-main" tabindex="-1">
+      <p id="maintenance-banner" class="alert alert-warning" role="status" hidden></p>
+      <!-- server.announcement, until dismissed. See App.showAnnouncement. -->
+      <div id="announcement-banner" class="alert alert-info alert-dismissible" role="status" hidden>
+        <span id="announcement-text"></span>
+        <button id="announcement-dismiss" type="button" class="btn-close" data-i18n-attr="aria-label:nav.close"></button>
+      </div>
+      <div id="error-banner" class="alert alert-danger alert-dismissible" role="alert" hidden>
+        <span id="error-banner-text"></span>
+        <button id="error-copy-button" type="button" class="btn btn-sm btn-outline-danger ms-2" data-i18n="ui.copy"></button>
+        <button type="button" class="btn-close" data-box-close="" data-i18n-attr="aria-label:nav.close"></button>
+      </div>
+
+      <!-- While the signed-in screens fetch what they show. See App.renderSignedIn. -->
+      <div id="app-loading" class="app-loading" role="status" hidden>
+        <span class="spinner-border" aria-hidden="true"></span>
+        <span class="visually-hidden" data-i18n="ui.loading"></span>
+      </div>
+
+      <section id="signed-out" class="card" hidden>
+        <div class="card-body">
+          <h2 class="h4 card-title" data-i18n="signed_out.heading"></h2>
+          <p data-i18n="signed_out.body"></p>
+          <p id="invalid-link" class="alert alert-warning mb-0" data-i18n="signed_out.invalid_link" hidden></p>
+          <p id="sign-in-expired" class="alert alert-warning mb-0" data-i18n="signed_out.sign_in_expired" hidden></p>
+          <p id="session-ended" class="alert alert-warning mb-0" data-i18n="signed_out.session_ended" hidden></p>
+
+          <!-- Only while the owner has auth.passwords on; see password.js. -->
+          <div id="password-login" class="mt-3" hidden>
+            <h3 class="h6" data-i18n="signed_out.password_heading"></h3>
+            <form id="password-login-form">
+              <div class="mb-3">
+                <label for="login-username" class="form-label" data-i18n="signed_out.username_label"></label>
+                <input id="login-username" class="form-control" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="32" required />
+              </div>
+              <div class="mb-3">
+                <label for="login-password" class="form-label" data-i18n="signed_out.password_label"></label>
+                <input id="login-password" class="form-control" name="password" type="password" autocomplete="current-password" required />
+              </div>
+              <button id="password-login-button" type="submit" class="btn btn-primary" data-i18n="signed_out.password_button"></button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- Asked for during any sign-in on an account with two-factor on. See
+           two_factor.js. -->
+      <section id="two-factor-step" class="card" hidden>
+        <div class="card-body">
+          <h2 class="h4 card-title" data-i18n="two_factor.step_heading"></h2>
+          <p data-i18n="two_factor.step_body"></p>
+          <form id="two-factor-step-form" autocomplete="off">
+            <div class="mb-3">
+              <label for="two-factor-step-code" class="form-label" data-i18n="two_factor.code_label"></label>
+              <input id="two-factor-step-code" class="form-control" name="code" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" maxlength="24" required />
+            </div>
+            <button type="submit" class="btn btn-primary" data-i18n="two_factor.step_button"></button>
+          </form>
+        </div>
+      </section>
+
+      <!-- What a login link opens. Nothing is redeemed until the button is
+           pressed -- see renderLoginConfirm in app.js. -->
+      <section id="login-confirm" class="card" hidden>
+        <div class="card-body">
+          <h2 class="h4 card-title" data-i18n="login_confirm.heading"></h2>
+          <p data-i18n="login_confirm.body"></p>
+          <p id="login-switch-warning" class="alert alert-warning" hidden></p>
+          <button id="login-confirm-button" class="btn btn-primary" data-i18n="login_confirm.button"></button>
+        </div>
+      </section>
+
+      <!-- What an invite link opens: type a name, then either pick yourself
+           from "did you mean" or join as someone new. See join.js. -->
+      <section id="join" class="card" hidden>
+        <div class="card-body">
+          <h2 id="join-heading" class="h4 card-title"></h2>
+          <p id="join-invalid" class="alert alert-warning" data-i18n="join.invalid" hidden></p>
+          <p id="join-switch-warning" class="alert alert-warning" hidden></p>
+
+          <div id="join-name-step" hidden>
+            <p data-i18n="join.body"></p>
+            <form id="join-name-form" class="row g-3 align-items-end" autocomplete="off">
+              <div class="col-md">
+                <label for="join-name" class="form-label" data-i18n="join.name_label"></label>
+                <input id="join-name" class="form-control" name="display_name" maxlength="80" required
+                       data-i18n-attr="placeholder:join.name_placeholder" />
+              </div>
+              <div class="col-md-auto">
+                <button type="submit" class="btn btn-primary" data-i18n="join.continue_button"></button>
+              </div>
+            </form>
+          </div>
+
+          <div id="join-choose" hidden>
+            <p id="join-choose-heading"></p>
+            <div id="join-matches" class="list-group mb-3"></div>
+            <p id="join-full" class="text-body-secondary" data-i18n="join.full" hidden></p>
+            <div class="row-actions">
+              <button id="join-create-button" class="btn btn-primary"></button>
+              <button id="join-back-button" class="btn btn-outline-secondary" data-i18n="join.back_button"></button>
+            </div>
+          </div>
+
+          <div id="join-pin-step" hidden>
+            <p id="join-pin-prompt"></p>
+            <form id="join-pin-form" autocomplete="off">
+              <div class="mb-3">
+                <label for="join-pin" class="form-label" data-i18n="join.pin_label"></label>
+                <input id="join-pin" class="form-control" name="pin" type="password" inputmode="numeric" maxlength="8" required />
+              </div>
+              <div class="row-actions">
+                <button type="submit" class="btn btn-primary" data-i18n="join.pin_button"></button>
+                <button type="button" id="join-pin-back-button" class="btn btn-outline-secondary" data-i18n="join.back_button"></button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!--
+        Every signed-in screen is a <section class="view"> holding its heading
+        and a stack of cards, one card per job: a form that makes something
+        and the list it adds to are two cards, so each has its own edge. A
+        screen that does one thing is one card.
+      -->
+      <section id="signed-in" hidden>
+        <!-- ============ The organizer ============ -->
+
+        <!-- No household yet: the first thing anyone signed in sees. -->
+        <section class="view" data-view="welcome" data-path="/welcome" id="welcome-panel" hidden>
+          <h2 class="view-title" data-i18n="org.welcome_heading"></h2>
+          <p class="view-description" data-i18n="org.welcome_text"></p>
+          <section class="card">
+            <div class="card-body">
+              <form id="welcome-form" class="row g-2 align-items-end">
+                <div class="col-12 col-md-8">
+                  <label for="welcome-name" class="form-label" data-i18n="households.name_label"></label>
+                  <input id="welcome-name" class="form-control" maxlength="80" required data-i18n-attr="placeholder:households.name_placeholder" />
+                </div>
+                <div class="col-12 col-md-4 d-grid">
+                  <button type="submit" class="btn btn-primary" data-i18n="households.create_button"></button>
+                </div>
+              </form>
+            </div>
+          </section>
+        </section>
+
+        <section class="view" data-view="scan" data-path="/scan" id="scan-panel" hidden>
+          <h2 class="view-title" data-i18n="scan.heading"></h2>
+          <p class="view-description" data-i18n="scan.description"></p>
+          <section class="card">
+            <div class="card-body">
+              <div class="d-flex flex-wrap gap-2 mb-3">
+                <button id="scan-start" type="button" class="btn btn-primary"><i class="bi bi-camera" aria-hidden="true"></i> <span data-i18n="scan.start"></span></button>
+                <button id="scan-stop" type="button" class="btn btn-outline-secondary" hidden><span data-i18n="scan.stop"></span></button>
+              </div>
+              <div id="scan-camera-box" class="scan-camera mb-3" hidden>
+                <video id="scan-video" class="w-100 rounded" playsinline muted></video>
+              </div>
+              <p id="scan-camera-error" class="text-danger small" hidden></p>
+              <form id="scan-form" class="row g-2">
+                <div class="col-12 col-md-8">
+                  <label for="scan-input" class="visually-hidden" data-i18n="scan.manual_label"></label>
+                  <input id="scan-input" class="form-control" autocomplete="off" data-i18n-attr="placeholder:scan.manual_label" />
+                </div>
+                <div class="col-12 col-md-4 d-grid">
+                  <button type="submit" class="btn btn-outline-primary" data-i18n="scan.lookup"></button>
+                </div>
+              </form>
+            </div>
+          </section>
+          <section id="scan-result" class="card" hidden>
+            <div class="card-body" id="scan-result-body"></div>
+          </section>
+        </section>
+
+        <section class="view view-wide" data-view="inventory" data-path="/inventory" id="inventory-panel" hidden>
+          <h2 class="view-title" data-i18n="inventory.heading"></h2>
+          <p class="view-description" data-i18n="inventory.description"></p>
+          <section class="card">
+            <div class="card-body">
+              <div class="row g-2" role="search">
+                <div class="col-12 col-lg-5">
+                  <label for="inventory-search" class="visually-hidden" data-i18n="inventory.search_label"></label>
+                  <input id="inventory-search" class="form-control" type="search" autocomplete="off" data-i18n-attr="placeholder:inventory.search_label" />
+                </div>
+                <div class="col-6 col-lg-2">
+                  <label for="inventory-location" class="visually-hidden" data-i18n="inventory.filter_location"></label>
+                  <select id="inventory-location" class="form-select"></select>
+                </div>
+                <div class="col-6 col-lg-2">
+                  <label for="inventory-tag" class="visually-hidden" data-i18n="inventory.filter_tag"></label>
+                  <input id="inventory-tag" class="form-control" autocomplete="off" data-i18n-attr="placeholder:inventory.filter_tag" />
+                </div>
+                <div class="col-12 col-lg-3">
+                  <label for="inventory-filter" class="visually-hidden" data-i18n="inventory.filter_label"></label>
+                  <select id="inventory-filter" class="form-select">
+                    <option value="" data-i18n="inventory.filter_all"></option>
+                    <option value="expiring" data-i18n="inventory.filter_expiring"></option>
+                    <option value="low" data-i18n="inventory.filter_low"></option>
+                    <option value="lent" data-i18n="inventory.filter_lent"></option>
+                  </select>
+                </div>
+              </div>
+              <div id="inventory-bulk" class="d-flex flex-wrap align-items-center gap-2 mt-3" hidden>
+                <span id="inventory-bulk-count" class="small text-body-secondary"></span>
+                <button id="inventory-bulk-move" type="button" class="btn btn-sm btn-outline-primary" data-i18n="inventory.bulk_move"></button>
+                <button id="inventory-bulk-delete" type="button" class="btn btn-sm btn-outline-danger" data-i18n="inventory.bulk_delete"></button>
+              </div>
+              <div class="table-responsive mt-3">
+                <table id="inventory-table" class="table table-hover align-middle">
+                  <thead>
+                    <tr>
+                      <th scope="col"><input id="inventory-select-all" class="form-check-input" type="checkbox" data-i18n-attr="aria-label:inventory.select_all" /></th>
+                      <th scope="col" data-sort="name"><button type="button" class="th-sort" data-i18n="inventory.col_item"></button></th>
+                      <th scope="col" data-sort="quantity"><button type="button" class="th-sort" data-i18n="inventory.col_quantity"></button></th>
+                      <th scope="col" data-sort="path"><button type="button" class="th-sort" data-i18n="inventory.col_where"></button></th>
+                      <th scope="col" data-sort="expires"><button type="button" class="th-sort" data-i18n="inventory.col_expires"></button></th>
+                      <th scope="col" data-sort="value"><button type="button" class="th-sort" data-i18n="inventory.col_value"></button></th>
+                      <th scope="col" data-i18n="inventory.col_actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <p id="inventory-empty" class="text-body-secondary" data-i18n="inventory.empty" hidden></p>
+              <p id="inventory-total" class="small text-body-secondary mb-0"></p>
+            </div>
+          </section>
+        </section>
+
+        <section class="view view-wide" data-view="labels" data-path="/labels" id="labels-panel" hidden>
+          <h2 class="view-title" data-i18n="labels.heading"></h2>
+          <p class="view-description" data-i18n="labels.description"></p>
+          <section class="card">
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="labels.new_heading"></h3>
+              <form id="label-form" class="row g-2 align-items-end">
+                <div class="col-12 col-md-4">
+                  <label for="label-name" class="form-label" data-i18n="labels.name_label"></label>
+                  <input id="label-name" class="form-control" maxlength="80" required />
+                </div>
+                <div class="col-6 col-md-3">
+                  <label for="label-location" class="form-label" data-i18n="labels.location_label"></label>
+                  <select id="label-location" class="form-select"></select>
+                </div>
+                <div class="col-6 col-md-2">
+                  <label for="label-color" class="form-label" data-i18n="labels.color_label"></label>
+                  <select id="label-color" class="form-select"></select>
+                </div>
+                <div class="col-12 col-md-3 d-grid">
+                  <button type="submit" class="btn btn-primary" data-i18n="labels.create_button"></button>
+                </div>
+              </form>
+              <p class="form-text mb-0" data-i18n="labels.create_hint"></p>
+            </div>
+          </section>
+          <section class="card">
+            <div class="card-body">
+              <div class="row g-2" role="search">
+                <div class="col-12 col-md-6">
+                  <label for="labels-search" class="visually-hidden" data-i18n="labels.search_label"></label>
+                  <input id="labels-search" class="form-control" type="search" autocomplete="off" data-i18n-attr="placeholder:labels.search_label" />
+                </div>
+                <div class="col-12 col-md-3">
+                  <label for="labels-move" class="visually-hidden" data-i18n="labels.move_filter"></label>
+                  <select id="labels-move" class="form-select">
+                    <option value="" data-i18n="labels.move_any"></option>
+                    <option value="packed" data-i18n="labels.move_packed"></option>
+                    <option value="in_transit" data-i18n="labels.move_in_transit"></option>
+                    <option value="unpacked" data-i18n="labels.move_unpacked"></option>
+                  </select>
+                </div>
+              </div>
+              <div class="table-responsive mt-3">
+                <table id="labels-table" class="table table-hover align-middle">
+                  <thead>
+                    <tr>
+                      <th scope="col" data-sort="name"><button type="button" class="th-sort" data-i18n="labels.col_name"></button></th>
+                      <th scope="col" data-i18n="labels.col_code"></th>
+                      <th scope="col" data-sort="path"><button type="button" class="th-sort" data-i18n="labels.col_where"></button></th>
+                      <th scope="col" data-sort="item_count"><button type="button" class="th-sort" data-i18n="labels.col_items"></button></th>
+                      <th scope="col" data-i18n="labels.col_moving"></th>
+                      <th scope="col" data-i18n="labels.col_actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <p id="labels-empty" class="text-body-secondary" data-i18n="labels.empty" hidden></p>
+            </div>
+          </section>
+        </section>
+
+        <!-- One container: /labels/<id>. container.js fills it. -->
+        <section class="view view-wide" data-view="container" data-path="/container" id="container-panel" hidden>
+          <h2 class="view-title" id="container-title" data-i18n="container.heading"></h2>
+          <p class="view-description" id="container-path"></p>
+          <div id="container-body"></div>
+        </section>
+
+        <section class="view" data-view="locations" data-path="/locations" id="locations-panel" hidden>
+          <h2 class="view-title" data-i18n="locations.heading"></h2>
+          <p class="view-description" data-i18n="locations.description"></p>
+          <section class="card">
+            <div class="card-body">
+              <form id="location-form" class="row g-2 align-items-end">
+                <div class="col-12 col-md-5">
+                  <label for="location-name" class="form-label" data-i18n="locations.name_label"></label>
+                  <input id="location-name" class="form-control" maxlength="80" required />
+                </div>
+                <div class="col-12 col-md-4">
+                  <label for="location-parent" class="form-label" data-i18n="locations.parent_label"></label>
+                  <select id="location-parent" class="form-select"></select>
+                </div>
+                <div class="col-12 col-md-3 d-grid">
+                  <button type="submit" class="btn btn-primary" data-i18n="locations.create_button"></button>
+                </div>
+              </form>
+            </div>
+          </section>
+          <section class="card">
+            <div class="card-body">
+              <div class="table-responsive">
+                <table id="locations-table" class="table table-hover align-middle">
+                  <thead>
+                    <tr>
+                      <th scope="col" data-i18n="locations.col_path"></th>
+                      <th scope="col" data-i18n="locations.col_containers"></th>
+                      <th scope="col" data-i18n="locations.col_actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <p id="locations-empty" class="text-body-secondary" data-i18n="locations.empty" hidden></p>
+            </div>
+          </section>
+        </section>
+
+        <section class="view view-wide" data-view="print" data-path="/print" id="print-panel" hidden>
+          <h2 class="view-title" data-i18n="print.heading"></h2>
+          <p class="view-description" data-i18n="print.description"></p>
+          <section class="card">
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="print.new_heading"></h3>
+              <form id="print-form" class="row g-2 align-items-end">
+                <div class="col-6 col-md-2">
+                  <label for="print-count" class="form-label" data-i18n="print.count_label"></label>
+                  <input id="print-count" class="form-control" type="number" min="1" max="300" value="12" required />
+                </div>
+                <div class="col-6 col-md-4">
+                  <label for="print-layout" class="form-label" data-i18n="print.layout_label"></label>
+                  <select id="print-layout" class="form-select"></select>
+                </div>
+                <div class="col-6 col-md-3">
+                  <label for="print-palette" class="form-label" data-i18n="print.palette_label"></label>
+                  <select id="print-palette" class="form-select"></select>
+                </div>
+                <div class="col-6 col-md-3 d-grid">
+                  <button type="submit" class="btn btn-primary" data-i18n="print.make_button"></button>
+                </div>
+                <div class="col-12">
+                  <label for="print-names" class="form-label" data-i18n="print.names_label"></label>
+                  <textarea id="print-names" class="form-control" rows="2" data-i18n-attr="placeholder:print.names_placeholder"></textarea>
+                </div>
+              </form>
+              <p class="form-text mb-0" data-i18n="print.tip"></p>
+            </div>
+          </section>
+          <section class="card">
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="print.runs_heading"></h3>
+              <div class="table-responsive">
+                <table id="sheets-table" class="table table-hover align-middle">
+                  <thead>
+                    <tr>
+                      <th scope="col" data-i18n="print.col_made"></th>
+                      <th scope="col" data-i18n="print.col_count"></th>
+                      <th scope="col" data-i18n="print.col_used"></th>
+                      <th scope="col" data-i18n="print.col_actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <p id="sheets-empty" class="text-body-secondary" data-i18n="print.empty" hidden></p>
+            </div>
+          </section>
+        </section>
+
+        <section class="view view-wide" data-view="reminders" data-path="/reminders" id="reminders-panel" hidden>
+          <h2 class="view-title" data-i18n="reminders.heading"></h2>
+          <p class="view-description" data-i18n="reminders.description"></p>
+          <section class="card">
+            <div class="card-body">
+              <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h3 class="card-title mb-0" data-i18n="reminders.notices_heading"></h3>
+                <button id="reminders-read-all" type="button" class="btn btn-sm btn-outline-secondary" data-i18n="reminders.read_all"></button>
+              </div>
+              <div class="table-responsive mt-3">
+                <table id="notices-table" class="table align-middle">
+                  <thead>
+                    <tr>
+                      <th scope="col" data-i18n="reminders.col_what"></th>
+                      <th scope="col" data-i18n="reminders.col_item"></th>
+                      <th scope="col" data-i18n="reminders.col_due"></th>
+                      <th scope="col" data-i18n="reminders.col_when"></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <p id="notices-empty" class="text-body-secondary" data-i18n="reminders.empty" hidden></p>
+            </div>
+          </section>
+          <section class="card">
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="reminders.feed_heading"></h3>
+              <p class="small" data-i18n="reminders.feed_text"></p>
+              <div class="d-flex flex-wrap gap-2">
+                <button id="feed-make" type="button" class="btn btn-outline-primary" data-i18n="reminders.feed_make"></button>
+                <button id="feed-off" type="button" class="btn btn-outline-danger" data-i18n="reminders.feed_off" hidden></button>
+              </div>
+              <div id="feed-box" class="alert alert-info mt-3" hidden>
+                <p class="small mb-1" data-i18n="reminders.feed_shown_once"></p>
+                <code id="feed-value" class="text-break"></code>
+                <div class="mt-2"><button id="feed-copy" type="button" class="btn btn-sm btn-outline-secondary" data-i18n="ui.copy"></button></div>
+              </div>
+            </div>
+          </section>
+          <section class="card">
+            <div class="card-body">
+              <label class="form-check form-switch">
+                <input id="reminders-browser" class="form-check-input" type="checkbox" role="switch" />
+                <span class="form-check-label" data-i18n="reminders.browser_label"></span>
+              </label>
+            </div>
+          </section>
+        </section>
+
+        <section class="view view-wide" data-view="reports" data-path="/reports" id="reports-panel" hidden>
+          <h2 class="view-title" data-i18n="reports.heading"></h2>
+          <p class="view-description" data-i18n="reports.description"></p>
+          <div id="reports-stats" class="row row-cols-2 row-cols-lg-4 g-3 mb-3"></div>
+          <section class="card">
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="reports.export_heading"></h3>
+              <div class="d-flex flex-wrap gap-2">
+                <a id="reports-csv" class="btn btn-outline-primary" href="/"><i class="bi bi-filetype-csv" aria-hidden="true"></i> <span data-i18n="reports.csv_button"></span></a>
+                <button id="reports-pdf" type="button" class="btn btn-outline-primary"><i class="bi bi-filetype-pdf" aria-hidden="true"></i> <span data-i18n="reports.pdf_button"></span></button>
+                <button id="reports-insurance" type="button" class="btn btn-outline-primary"><i class="bi bi-shield-check" aria-hidden="true"></i> <span data-i18n="reports.insurance_button"></span></button>
+              </div>
+              <p class="form-text mb-0" data-i18n="reports.pdf_hint"></p>
+            </div>
+          </section>
+          <section class="card">
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="reports.import_heading"></h3>
+              <p class="small" data-i18n="reports.import_text"></p>
+              <div class="row"><div class="col-md-8 col-xl-6">
+                <label for="reports-import" class="visually-hidden" data-i18n="reports.import_heading"></label>
+                <input id="reports-import" class="form-control" type="file" accept=".csv,text/csv" />
+              </div></div>
+              <p id="reports-import-result" class="small mt-2 mb-0" hidden></p>
+            </div>
+          </section>
+          <section class="card">
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="reports.by_location_heading"></h3>
+              <div class="table-responsive">
+                <table id="reports-table" class="table align-middle">
+                  <thead>
+                    <tr>
+                      <th scope="col" data-i18n="reports.col_location"></th>
+                      <th scope="col" data-i18n="reports.col_containers"></th>
+                      <th scope="col" data-i18n="reports.col_items"></th>
+                      <th scope="col" data-i18n="reports.col_value"></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section class="view view-wide" data-view="households" data-path="/households" id="households-panel" hidden>
+          <h2 class="view-title" data-i18n="households.heading"></h2>
+          <p class="view-description" data-i18n="households.description"></p>
+          <div id="households-body"></div>
+          <section class="card">
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="households.new_heading"></h3>
+              <form id="household-form" class="row g-2 align-items-end">
+                <div class="col-12 col-md-8">
+                  <label for="household-name" class="form-label" data-i18n="households.name_label"></label>
+                  <input id="household-name" class="form-control" maxlength="80" required />
+                </div>
+                <div class="col-12 col-md-4 d-grid">
+                  <button type="submit" class="btn btn-outline-primary" data-i18n="households.create_button"></button>
+                </div>
+              </form>
+            </div>
+          </section>
+        </section>
+
+        <section class="view view-wide" data-view="trash" data-path="/trash" id="trash-panel" hidden>
+          <h2 class="view-title" data-i18n="trash.heading"></h2>
+          <p class="view-description" data-i18n="trash.description"></p>
+          <section class="card">
+            <div class="card-body">
+              <div class="table-responsive">
+                <table id="trash-table" class="table table-hover align-middle">
+                  <thead>
+                    <tr>
+                      <th scope="col" data-i18n="trash.col_what"></th>
+                      <th scope="col" data-i18n="trash.col_kind"></th>
+                      <th scope="col" data-i18n="trash.col_deleted"></th>
+                      <th scope="col" data-i18n="trash.col_actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <p id="trash-empty" class="text-body-secondary" data-i18n="trash.empty" hidden></p>
+            </div>
+          </section>
+        </section>
+
+        <!-- The item editor, shared by every screen that shows items. -->
+        <div class="modal fade" id="item-modal" tabindex="-1" aria-labelledby="item-modal-title" aria-hidden="true">
+          <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
+            <form class="modal-content" id="item-form">
+              <div class="modal-header">
+                <h2 class="modal-title h5" id="item-modal-title" data-i18n="item.edit_heading"></h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" data-i18n-attr="aria-label:nav.close"></button>
+              </div>
+              <div class="modal-body" id="item-modal-body"></div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-i18n="ui.cancel"></button>
+                <button type="submit" class="btn btn-primary" data-i18n="item.save"></button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- What gets printed: label sheets and reports. Hidden on screen. -->
+        <div id="print-area" class="print-area" aria-hidden="true"></div>
+
+        <!-- Everything about you: who you are, how you sign in, and what can
+             act as you. A feature's card stays hidden until its own JS shows it. -->
+        <section class="view" data-view="account" data-path="/account" id="account-panel">
+          <h2 class="view-title" data-i18n="account.heading"></h2>
+
+
+          <section class="card">
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="account.profile_heading"></h3>
+              <form id="rename-form" class="row g-3 align-items-end" autocomplete="off">
+                <div class="col-md">
+                  <label for="display-name" class="form-label" data-i18n="account.display_name_label"></label>
+                  <input id="display-name" class="form-control" name="display_name" maxlength="80" required
+                         data-i18n-attr="placeholder:account.display_name_placeholder" />
+                </div>
+                <div class="col-md-auto">
+                  <button type="submit" class="btn btn-primary" data-i18n="account.save_button"></button>
+                </div>
+              </form>
+            </div>
+          </section>
+
+          <!-- A login link for your own account, to sign in on another device.
+               Any signed-in user may mint one; see Api.createMyLoginLink. -->
+          <section class="card">
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="account.device_heading"></h3>
+              <p class="text-body-secondary" data-i18n="account.device_description"></p>
+              <!-- The link you could still use, if any, and a way to stop it. -->
+              <div id="my-live-link" class="d-flex flex-wrap align-items-center gap-2 mb-3" hidden>
+                <span id="my-live-link-text" class="text-body-secondary"></span>
+                <button id="my-link-cancel-button" class="btn btn-sm btn-outline-danger" data-i18n="login_links.cancel_button"></button>
+              </div>
+              <button id="my-link-button" class="btn btn-outline-secondary" data-i18n="account.device_button"></button>
+              <div id="my-link-box" class="alert alert-info alert-dismissible mt-3 mb-0" hidden>
+                <button type="button" class="btn-close" data-box-close="my-link-button" data-i18n-attr="aria-label:nav.close"></button>
+                <p id="my-link-notice" class="mb-2"></p>
+                <div class="link-box">
+                  <code id="my-link-value"></code>
+                  <button id="my-link-copy-button" class="btn btn-sm btn-outline-secondary" data-i18n="account.copy_button"></button>
+                  <button id="my-link-qr-button" class="btn btn-sm btn-outline-secondary" data-i18n="ui.qr_button"></button>
+                </div>
+                <canvas id="my-link-qr" class="link-qr" role="img" data-i18n-attr="aria-label:ui.qr_label" hidden></canvas>
+              </div>
+            </div>
+          </section>
+
+          <!-- Only while the owner has auth.passwords on; see password.js. -->
+          <!-- Your own Anthropic key, model and effort for reading photos (my_ai.js). -->
+          <section class="card" id="my-ai-panel" data-path="/account/ai" hidden>
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="my_ai.heading"></h3>
+              <p class="small" data-i18n="my_ai.text"></p>
+              <p id="my-ai-state" class="small fw-semibold"></p>
+              <form id="my-ai-form" class="row g-2 align-items-end">
+                <div class="col-12">
+                  <label for="my-ai-key" class="form-label" data-i18n="my_ai.key_label"></label>
+                  <input id="my-ai-key" class="form-control" type="password" autocomplete="off" maxlength="300" data-no-track data-i18n-attr="placeholder:my_ai.key_placeholder" />
+                </div>
+                <div class="col-6 col-md-4">
+                  <label for="my-ai-model" class="form-label" data-i18n="my_ai.model_label"></label>
+                  <select id="my-ai-model" class="form-select"></select>
+                </div>
+                <div class="col-6 col-md-4">
+                  <label for="my-ai-effort" class="form-label" data-i18n="my_ai.effort_label"></label>
+                  <select id="my-ai-effort" class="form-select">
+                    <option value="" data-i18n="my_ai.effort_app"></option>
+                    <option value="low" data-i18n="my_ai.effort_low"></option>
+                    <option value="medium" data-i18n="my_ai.effort_medium"></option>
+                    <option value="high" data-i18n="my_ai.effort_high"></option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-4 d-flex gap-2">
+                  <button type="submit" class="btn btn-primary flex-grow-1" data-i18n="my_ai.save"></button>
+                  <button id="my-ai-remove" type="button" class="btn btn-outline-danger" data-i18n="my_ai.remove" hidden></button>
+                </div>
+              </form>
+              <p class="form-text mb-0" data-i18n="my_ai.model_hint"></p>
+            </div>
+          </section>
+
+          <section class="card" id="password-panel" data-path="/account/password" hidden>
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="password.heading"></h3>
+              <p class="text-body-secondary" data-i18n="password.description"></p>
+              <p><span id="password-status" class="badge text-bg-secondary"></span></p>
+              <form id="password-form">
+                <div class="mb-3">
+                  <label for="password-username" class="form-label" data-i18n="password.username_label"></label>
+                  <input id="password-username" class="form-control" name="username" autocomplete="username" autocapitalize="none" spellcheck="false"
+                         minlength="3" maxlength="32" pattern="[A-Za-z0-9._\-]{3,32}" required />
+                  <div class="form-text" data-i18n="password.username_help"></div>
+                </div>
+                <div class="mb-3">
+                  <label for="password-new" class="form-label" data-i18n="password.new_label"></label>
+                  <input id="password-new" class="form-control" name="new_password" type="password" autocomplete="new-password" required />
+                  <div class="form-text" data-i18n="password.new_help"></div>
+                </div>
+                <div class="mb-3">
+                  <label for="password-confirm" class="form-label" data-i18n="password.confirm_label"></label>
+                  <input id="password-confirm" class="form-control" name="confirm_password" type="password" autocomplete="new-password" required />
+                </div>
+                <div id="password-code-row" class="mb-3" hidden>
+                  <label for="password-code" class="form-label" data-i18n="two_factor.code_label"></label>
+                  <input id="password-code" class="form-control" name="code" autocomplete="one-time-code" spellcheck="false" maxlength="24" />
+                </div>
+                <div class="row-actions">
+                  <button type="submit" class="btn btn-primary" data-i18n="password.save_button"></button>
+                  <button type="button" id="password-remove-button" class="btn btn-outline-danger" data-i18n="password.remove_button" hidden></button>
+                </div>
+              </form>
+            </div>
+          </section>
+
+          <!-- Only for non-admin accounts; see pin.js. -->
+          <section class="card" id="pin-panel" data-path="/account/pin" hidden>
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="pin.heading"></h3>
+              <p class="text-body-secondary" data-i18n="pin.description"></p>
+              <p><span id="pin-status" class="badge text-bg-secondary"></span></p>
+              <form id="pin-form" autocomplete="off">
+                <div class="mb-3">
+                  <label for="pin-value" class="form-label" data-i18n="pin.label"></label>
+                  <input id="pin-value" class="form-control" name="pin" type="password" inputmode="numeric" minlength="4" maxlength="8"
+                         pattern="[0-9]{4,8}" required data-i18n-attr="placeholder:pin.placeholder" />
+                </div>
+                <div class="row-actions">
+                  <button type="submit" class="btn btn-primary" data-i18n="pin.save_button"></button>
+                  <button type="button" id="pin-clear-button" class="btn btn-outline-danger" data-i18n="pin.clear_button" hidden></button>
+                </div>
+              </form>
+            </div>
+          </section>
+
+          <!-- Only while the owner has auth.two_factor on; see two_factor.js. -->
+          <section class="card" id="two-factor-panel" data-path="/account/two-factor" hidden>
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="two_factor.heading"></h3>
+              <p class="text-body-secondary" data-i18n="two_factor.description"></p>
+              <p><span id="two-factor-status" class="badge text-bg-secondary"></span></p>
+              <button id="two-factor-start-button" class="btn btn-primary" data-i18n="two_factor.start_button" hidden></button>
+
+              <div id="two-factor-setup" hidden>
+                <p data-i18n="two_factor.setup_scan"></p>
+                <canvas id="two-factor-qr" class="d-block img-fluid mb-3 border rounded" role="img" data-i18n-attr="aria-label:ui.qr_label"></canvas>
+                <p class="mb-1" data-i18n="two_factor.setup_manual"></p>
+                <div class="link-box mb-3">
+                  <code id="two-factor-secret"></code>
+                  <button id="two-factor-secret-copy" type="button" class="btn btn-sm btn-outline-secondary" data-i18n="two_factor.copy_secret_button"></button>
+                </div>
+                <form id="two-factor-confirm-form" autocomplete="off">
+                  <div class="mb-3">
+                    <label for="two-factor-code" class="form-label" data-i18n="two_factor.setup_code_label"></label>
+                    <input id="two-factor-code" class="form-control" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required />
+                  </div>
+                  <button type="submit" class="btn btn-primary" data-i18n="two_factor.confirm_button"></button>
+                </form>
+              </div>
+
+              <div id="two-factor-recovery" class="alert alert-info" hidden>
+                <p data-i18n="two_factor.recovery_notice"></p>
+                <pre id="two-factor-recovery-codes" class="mb-3"></pre>
+                <div class="row-actions">
+                  <button id="two-factor-recovery-copy" class="btn btn-sm btn-outline-secondary" data-i18n="two_factor.copy_button"></button>
+                  <button id="two-factor-recovery-download" class="btn btn-sm btn-outline-secondary" data-i18n="two_factor.download_button"></button>
+                  <button id="two-factor-recovery-done" class="btn btn-sm btn-primary" data-i18n="two_factor.done_button"></button>
+                </div>
+              </div>
+
+              <form id="two-factor-disable-form" autocomplete="off" hidden>
+                <div class="mb-3">
+                  <label for="two-factor-disable-code" class="form-label" data-i18n="two_factor.code_label"></label>
+                  <input id="two-factor-disable-code" class="form-control" name="code" autocomplete="one-time-code" spellcheck="false" maxlength="24" required />
+                </div>
+                <button type="submit" class="btn btn-outline-danger" data-i18n="two_factor.disable_button"></button>
+              </form>
+            </div>
+          </section>
+
+          <!--
+            API keys: the non-browser way in, for every signed-in user. The role
+            select is revealed only for an admin (see keys.js) because a key can
+            never carry more permission than the account that owns it.
+          -->
+          <section class="card" id="api-keys-panel" data-path="/account/api-keys" hidden>
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="api_keys.heading"></h3>
+              <p class="text-body-secondary" data-i18n="api_keys.description"></p>
+              <p id="key-spec-line" class="small" hidden>
+                <span data-i18n="api_keys.spec_text"></span>
+                <a id="key-spec-link" target="_blank" rel="noopener noreferrer" data-i18n="api_keys.spec_link"></a>
+                <span id="key-doc-part" hidden>&middot;
+                  <a id="key-doc-link" target="_blank" rel="noopener noreferrer" data-i18n="api_keys.doc_link"></a>
+                </span>
+              </p>
+
+              <form id="create-key-form" class="row g-3 align-items-end" autocomplete="off">
+                <div class="col-md">
+                  <label for="key-name" class="form-label" data-i18n="api_keys.name_label"></label>
+                  <input id="key-name" class="form-control" name="name" maxlength="80" required
+                         data-i18n-attr="placeholder:api_keys.name_placeholder" />
+                </div>
+                <div class="col-md" id="key-role-field" hidden>
+                  <label for="key-role" class="form-label" data-i18n="api_keys.role_label"></label>
+                  <select id="key-role" class="form-select" name="role">
+                    <option value="user" data-i18n="api_keys.role_user"></option>
+                    <option value="admin" data-i18n="api_keys.role_admin"></option>
+                  </select>
+                </div>
+                <div class="col-md">
+                  <label for="key-days" class="form-label" data-i18n="api_keys.days_label"></label>
+                  <input id="key-days" class="form-control" name="expires_in_days" type="number" min="0" max="3650" inputmode="numeric"
+                         data-i18n-attr="placeholder:api_keys.days_placeholder" />
+                </div>
+                <div class="col-md-auto">
+                  <button type="submit" class="btn btn-primary" data-i18n="api_keys.create_button"></button>
+                </div>
+              </form>
+
+              <div id="key-secret-box" class="alert alert-info alert-dismissible mt-3" hidden>
+                <button type="button" class="btn-close" data-box-close="key-name" data-i18n-attr="aria-label:nav.close"></button>
+                <p class="mb-2" data-i18n="api_keys.secret_notice"></p>
+                <div class="link-box">
+                  <code id="key-secret-value"></code>
+                  <button id="copy-key-button" class="btn btn-sm btn-outline-secondary" data-i18n="api_keys.copy_button"></button>
+                </div>
+              </div>
+
+              <div class="mt-4" role="search">
+                <label for="keys-search" class="visually-hidden" data-i18n="api_keys.search_label"></label>
+                <input id="keys-search" class="form-control" type="search" autocomplete="off"
+                       data-i18n-attr="placeholder:api_keys.search_label" />
+              </div>
+              <div class="form-check mt-2">
+                <input id="keys-live-only" class="form-check-input" type="checkbox" />
+                <label for="keys-live-only" class="form-check-label" data-i18n="api_keys.live_only_label"></label>
+              </div>
+
+              <div class="table-responsive mt-3">
+                <table id="keys-table" class="table table-hover align-middle mb-0" data-empty="api_keys.empty">
+                  <thead>
+                    <tr>
+                      <th scope="col" data-sort="name"><button type="button" class="th-sort" data-i18n="api_keys.table_name"></button></th>
+                      <th scope="col" data-sort="role"><button type="button" class="th-sort" data-i18n="api_keys.table_role"></button></th>
+                      <th scope="col" data-i18n="api_keys.table_status"></th>
+                      <th scope="col" data-sort="last_used_at"><button type="button" class="th-sort" data-i18n="api_keys.table_last_used"></button></th>
+                      <th scope="col" data-sort="expires_at"><button type="button" class="th-sort" data-i18n="api_keys.table_expires"></button></th>
+                      <th scope="col" data-i18n="api_keys.table_actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <!--
+            MCP: the API keys again, set up for an agent. Pick the client, make
+            a key, and the setup to paste comes back with the key already in
+            it. Nothing here the API keys card cannot do; it saves the reading.
+            See mcp.js.
+          -->
+          <section class="card" id="mcp-panel" hidden>
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="mcp.heading"></h3>
+              <p class="text-body-secondary" data-i18n="mcp.description"></p>
+              <p id="mcp-spec-line" class="small" hidden>
+                <span data-i18n="mcp.spec_text"></span>
+                <a id="mcp-spec-link" target="_blank" rel="noopener noreferrer" data-i18n="mcp.spec_link"></a>
+                <span id="mcp-doc-part" hidden>&middot;
+                  <a id="mcp-doc-link" target="_blank" rel="noopener noreferrer" data-i18n="mcp.doc_link"></a>
+                </span>
+              </p>
+
+              <p class="mb-1 small fw-semibold" data-i18n="mcp.endpoint_label"></p>
+              <div class="link-box mb-3">
+                <code id="mcp-endpoint"></code>
+                <button id="mcp-endpoint-copy" type="button" class="btn btn-sm btn-outline-secondary" data-i18n="mcp.copy_button"></button>
+              </div>
+
+              <fieldset class="mb-3">
+                <legend class="form-label fs-6 mb-2" data-i18n="mcp.client_label"></legend>
+                <div id="mcp-clients" class="d-flex flex-wrap gap-2" role="radiogroup">
+                  <input type="radio" class="btn-check" name="mcp-client" id="mcp-client-claude_code" value="claude_code" checked />
+                  <label class="btn btn-sm btn-outline-primary" for="mcp-client-claude_code" data-i18n="mcp.client_claude_code"></label>
+                  <input type="radio" class="btn-check" name="mcp-client" id="mcp-client-claude_desktop" value="claude_desktop" />
+                  <label class="btn btn-sm btn-outline-primary" for="mcp-client-claude_desktop" data-i18n="mcp.client_claude_desktop"></label>
+                  <input type="radio" class="btn-check" name="mcp-client" id="mcp-client-json" value="json" />
+                  <label class="btn btn-sm btn-outline-primary" for="mcp-client-json" data-i18n="mcp.client_json"></label>
+                </div>
+              </fieldset>
+
+              <form id="mcp-key-form" class="row g-3 align-items-end" autocomplete="off">
+                <div class="col-md">
+                  <label for="mcp-key-name" class="form-label" data-i18n="mcp.name_label"></label>
+                  <input id="mcp-key-name" class="form-control" name="name" maxlength="80" required />
+                </div>
+                <div class="col-md" id="mcp-key-role-field" hidden>
+                  <label for="mcp-key-role" class="form-label" data-i18n="api_keys.role_label"></label>
+                  <select id="mcp-key-role" class="form-select" name="role">
+                    <option value="user" data-i18n="api_keys.role_user"></option>
+                    <option value="admin" data-i18n="api_keys.role_admin"></option>
+                  </select>
+                </div>
+                <div class="col-md">
+                  <label for="mcp-key-days" class="form-label" data-i18n="api_keys.days_label"></label>
+                  <input id="mcp-key-days" class="form-control" name="expires_in_days" type="number" min="0" max="3650" inputmode="numeric"
+                         data-i18n-attr="placeholder:api_keys.days_placeholder" />
+                </div>
+                <div class="col-md-auto">
+                  <button type="submit" class="btn btn-primary" data-i18n="mcp.create_button"></button>
+                </div>
+              </form>
+
+              <div id="mcp-key-notice" class="alert alert-info alert-dismissible mt-3 mb-0" hidden>
+                <button id="mcp-key-forget" type="button" class="btn-close" data-i18n-attr="aria-label:mcp.forget_label"></button>
+                <span id="mcp-key-notice-text"></span>
+              </div>
+
+              <p id="mcp-hint" class="small text-body-secondary mt-3 mb-1"></p>
+              <div class="link-box">
+                <pre class="mcp-snippet"><code id="mcp-snippet"></code></pre>
+                <button id="mcp-snippet-copy" type="button" class="btn btn-sm btn-outline-secondary" data-i18n="mcp.copy_button"></button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Every device with a live session on this account; see sessions.js.
+               Folded away until opened, and remembered open or shut in this
+               browser. It is only fetched while open. -->
+          <details class="card card-collapse" id="sessions-card">
+            <summary class="card-header">
+              <h3 class="card-title" data-i18n="sessions.heading"></h3>
+            </summary>
+            <div class="card-body">
+              <p class="text-body-secondary" data-i18n="sessions.description"></p>
+              <div class="table-responsive">
+                <table id="sessions-table" class="table table-hover align-middle" data-empty="sessions.empty">
+                  <thead>
+                    <tr>
+                      <th scope="col" data-i18n="sessions.table_device"></th>
+                      <th scope="col" data-i18n="sessions.table_ip"></th>
+                      <th scope="col" data-i18n="sessions.table_seen"></th>
+                      <th scope="col" data-i18n="sessions.table_signed_in"></th>
+                      <th scope="col" data-i18n="sessions.table_actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <button id="sessions-revoke-others" class="btn btn-outline-danger" data-i18n="sessions.revoke_others_button" hidden></button>
+            </div>
+          </details>
+
+          <section class="card">
+            <div class="card-body d-flex flex-wrap align-items-center gap-3">
+              <p class="text-body-secondary mb-0 me-auto" data-i18n="account.logout_description"></p>
+              <button id="logout-button" class="btn btn-outline-danger" data-i18n="account.logout_button"></button>
+            </div>
+          </section>
+        </section>
+
+        <!-- Your themes, and for admins the defaults everyone starts from.
+             Drawn by themes_editor.js; see theme.js for where they are kept. -->
+        <section class="view view-full" data-view="appearance" data-path="/appearance" id="appearance">
+          <h2 class="view-title" data-i18n="theme.heading"></h2>
+          <ul class="nav nav-tabs mb-3" id="theme-tabs" role="tablist" hidden>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="theme-tab-mine" type="button" role="tab" data-bs-toggle="tab"
+                      data-bs-target="#theme-pane-mine" aria-controls="theme-pane-mine" aria-selected="true" data-i18n="theme.tab_mine"></button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="theme-tab-defaults" type="button" role="tab" data-bs-toggle="tab"
+                      data-bs-target="#theme-pane-defaults" aria-controls="theme-pane-defaults" aria-selected="false" data-i18n="theme.tab_defaults"></button>
+            </li>
+          </ul>
+          <div class="tab-content">
+            <div class="tab-pane show active" id="theme-pane-mine" role="tabpanel" aria-labelledby="theme-tab-mine">
+              <p class="text-body-secondary" data-i18n="theme.description"></p>
+              <div id="theme-editor-mine"></div>
+            </div>
+            <div class="tab-pane" id="theme-pane-defaults" role="tabpanel" aria-labelledby="theme-tab-defaults">
+              <p class="text-body-secondary" data-i18n="theme.defaults_description"></p>
+              <div id="theme-editor-defaults"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Each person's own keys, saved to their account. See shortcuts.js. -->
+        <section class="view" data-view="shortcuts" data-path="/shortcuts" id="shortcuts">
+          <h2 class="view-title" data-i18n="shortcuts.heading"></h2>
+          <section class="card">
+            <div class="card-body">
+              <p class="text-body-secondary" data-i18n="shortcuts.description"></p>
+              <p id="shortcuts-detected" class="small text-body-secondary"></p>
+              <div class="table-responsive">
+                <table id="shortcuts-table" class="table align-middle shortcut-table">
+                  <thead>
+                    <tr>
+                      <th scope="col" data-i18n="shortcuts.table_action"></th>
+                      <th scope="col" data-i18n="shortcuts.table_keys"></th>
+                      <th scope="col" class="text-end"><span class="visually-hidden" data-i18n="shortcuts.table_buttons"></span></th>
+                    </tr>
+                  </thead>
+                  <tbody id="shortcuts-rows"></tbody>
+                </table>
+              </div>
+              <p class="small text-body-secondary" data-i18n="shortcuts.escape_note"></p>
+              <button id="shortcuts-reset-all" type="button" class="btn btn-outline-secondary" data-i18n="shortcuts.reset_all" hidden></button>
+            </div>
+          </section>
+        </section>
+
+        <section class="view view-wide" data-view="files" data-path="/files" id="files-panel" hidden>
+          <h2 class="view-title" data-i18n="files.heading"></h2>
+          <p class="view-description" data-i18n="files.description"></p>
+
+          <!-- Upload above, the list it adds to below at the full width, as on
+               Users: a table takes the most room (see "Hard rules" in
+               references/frontend.md). -->
+          <section class="card">
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="files.upload_heading"></h3>
+              <!-- One picker and its progress: a column, not the card's width. -->
+              <div class="row"><div class="col-md-8 col-xl-6">
+              <label for="file-input" class="form-label" data-i18n="files.upload_label"></label>
+              <input id="file-input" class="form-control" type="file" multiple />
+              <p class="form-text mb-0" data-i18n="files.drop_hint"></p>
+
+              <div id="file-progress-box" class="mt-3" hidden>
+                <div id="file-progress-text" class="small text-body-secondary mb-1 text-break"></div>
+                <div class="d-flex align-items-center gap-2">
+                  <progress id="file-progress" class="flex-grow-1" max="1" value="0" aria-labelledby="file-progress-text"></progress>
+                  <button id="file-cancel" type="button" class="btn btn-sm btn-outline-secondary" data-i18n="ui.cancel"></button>
+                </div>
+              </div>
+
+              <div id="files-usage" class="mt-3" hidden>
+                <div id="files-usage-text" class="small text-body-secondary mb-1"></div>
+                <progress id="files-usage-bar" class="w-100" max="1" value="0" aria-labelledby="files-usage-text"></progress>
+              </div>
+              </div></div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="files.list_heading"></h3>
+              <div id="files-everyone-field" class="form-check form-switch" hidden>
+                <input id="files-everyone" class="form-check-input" type="checkbox" role="switch" />
+                <label for="files-everyone" class="form-check-label" data-i18n="files.everyone_label"></label>
+              </div>
+              <p id="files-usage-all" class="small text-body-secondary mt-2 mb-0" hidden></p>
+
+              <div class="mt-3" role="search">
+                <label for="files-search" class="visually-hidden" data-i18n="files.search_label"></label>
+                <input id="files-search" class="form-control" type="search" autocomplete="off"
+                       data-i18n-attr="placeholder:files.search_label" />
+              </div>
+
+              <div class="table-responsive mt-3">
+                <table id="files-table" class="table table-hover align-middle">
+                  <thead>
+                    <tr>
+                      <th scope="col" data-sort="name"><button type="button" class="th-sort" data-i18n="files.table_name"></button></th>
+                      <th scope="col" id="files-owner-column" data-sort="user_name" hidden><button type="button" class="th-sort" data-i18n="files.table_owner"></button></th>
+                      <th scope="col" data-sort="size"><button type="button" class="th-sort" data-i18n="files.table_size"></button></th>
+                      <th scope="col" data-sort="created_at"><button type="button" class="th-sort" data-i18n="files.table_uploaded"></button></th>
+                      <th scope="col" data-i18n="files.table_actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <p id="files-empty" class="text-body-secondary mb-0" data-i18n="files.empty" hidden></p>
+            </div>
+          </section>
+        </section>
+
+        <!-- What this app is and where it comes from: app.description, the
+             version, app.repo and the API reference. Shown only when
+             app.show_about is on. See about.js. -->
+        <section class="view" data-view="about" data-path="/about" id="about-panel" hidden>
+          <h2 class="view-title" data-i18n="about.heading"></h2>
+          <section class="card">
+            <div class="card-body">
+              <p id="about-description" class="card-text" hidden></p>
+              <dl class="row mb-0">
+                <dt class="col-sm-4 col-lg-3" data-i18n="about.version"></dt>
+                <dd id="about-version" class="col-sm-8 col-lg-9 text-break"></dd>
+                <dt id="about-source-term" class="col-sm-4 col-lg-3" data-i18n="about.source" hidden></dt>
+                <dd id="about-source-detail" class="col-sm-8 col-lg-9 text-break" hidden><a id="about-source" target="_blank" rel="noopener noreferrer"></a></dd>
+                <dt id="about-api-term" class="col-sm-4 col-lg-3" data-i18n="about.api_reference" hidden></dt>
+                <dd id="about-api-detail" class="col-sm-8 col-lg-9 text-break" hidden><a id="about-api" target="_blank" rel="noopener noreferrer" data-i18n="about.api_link"></a></dd>
+                <dt id="about-mcp-term" class="col-sm-4 col-lg-3" data-i18n="about.mcp_reference" hidden></dt>
+                <dd id="about-mcp-detail" class="col-sm-8 col-lg-9 text-break" hidden><a id="about-mcp" target="_blank" rel="noopener noreferrer" data-i18n="about.mcp_link"></a></dd>
+              </dl>
+            </div>
+          </section>
+        </section>
+
+        <section class="view" data-view="users" data-path="/admin/users" id="admin-panel" hidden>
+          <h2 class="view-title" data-i18n="admin.heading"></h2>
+          <p class="view-description" data-i18n="admin.description"></p>
+
+          <section class="card">
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="admin.create_heading"></h3>
+              <form id="create-user-form" class="row g-3 align-items-end" autocomplete="off">
+                <div class="col-md">
+                  <label for="new-name" class="form-label" data-i18n="admin.new_name_label"></label>
+                  <input id="new-name" class="form-control" name="display_name" maxlength="80" required
+                         data-i18n-attr="placeholder:admin.new_name_placeholder" />
+                </div>
+                <div class="col-md">
+                  <label for="new-role" class="form-label" data-i18n="admin.new_role_label"></label>
+                  <select id="new-role" class="form-select" name="role">
+                    <option value="user" data-i18n="admin.role_user"></option>
+                    <option value="admin" data-i18n="admin.role_admin"></option>
+                  </select>
+                </div>
+                <!-- How often and how long the link works; LoginLinks fills these. -->
+                <div class="col-md">
+                  <label for="new-uses" class="form-label" data-i18n="login_links.uses_label"></label>
+                  <select id="new-uses" class="form-select" name="uses"></select>
+                </div>
+                <div class="col-md">
+                  <label for="new-expires" class="form-label" data-i18n="login_links.expires_label"></label>
+                  <select id="new-expires" class="form-select" name="expires" aria-describedby="new-expires-help"></select>
+                </div>
+                <div id="new-expires-help" class="col-12 form-text mt-1 order-last" data-i18n="login_links.expires_help"></div>
+                <div class="col-md-auto">
+                  <button type="submit" class="btn btn-primary" data-i18n="admin.create_button"></button>
+                </div>
+              </form>
+
+              <div id="login-link-box" class="alert alert-info alert-dismissible mt-3 mb-0" hidden>
+                <button type="button" class="btn-close" data-box-close="new-name" data-i18n-attr="aria-label:nav.close"></button>
+                <p id="login-link-for" class="fw-semibold mb-1"></p>
+                <p id="login-link-notice" class="mb-2"></p>
+                <div class="link-box">
+                  <code id="login-link-value"></code>
+                  <button id="copy-link-button" class="btn btn-sm btn-outline-secondary" data-i18n="admin.copy_button"></button>
+                  <button id="login-link-qr-button" class="btn btn-sm btn-outline-secondary" data-i18n="ui.qr_button"></button>
+                </div>
+                <canvas id="login-link-qr" class="link-qr" role="img" data-i18n-attr="aria-label:ui.qr_label" hidden></canvas>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="admin.list_heading"></h3>
+              <div role="search">
+                <label for="users-search" class="visually-hidden" data-i18n="admin.search_label"></label>
+                <input id="users-search" class="form-control" type="search" autocomplete="off"
+                       data-i18n-attr="placeholder:admin.search_label" />
+              </div>
+
+              <div class="table-responsive mt-3">
+                <table id="users-table" class="table table-hover align-middle mb-0" data-empty="admin.empty">
+                  <thead>
+                    <tr>
+                      <th scope="col" data-sort="display_name"><button type="button" class="th-sort" data-i18n="admin.table_name"></button></th>
+                      <th scope="col" data-sort="role"><button type="button" class="th-sort" data-i18n="admin.table_role"></button></th>
+                      <th scope="col" data-sort="disabled"><button type="button" class="th-sort" data-i18n="admin.table_status"></button></th>
+                      <th scope="col" data-sort="created_at"><button type="button" class="th-sort" data-i18n="admin.table_created"></button></th>
+                      <th scope="col" data-i18n="admin.table_actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <!-- One account's devices, from its Sessions button. See Sessions.showFor. -->
+          <section id="user-sessions" class="card" hidden>
+            <div class="card-body">
+              <div class="d-flex align-items-center justify-content-between gap-2">
+                <h3 id="user-sessions-heading" class="card-title mb-0"></h3>
+                <button id="user-sessions-close" type="button" class="btn-close" data-i18n-attr="aria-label:nav.close"></button>
+              </div>
+              <div class="table-responsive mt-2">
+                <table id="user-sessions-table" class="table table-hover align-middle mb-0" data-empty="sessions.user_empty">
+                  <thead>
+                    <tr>
+                      <th scope="col" data-i18n="sessions.table_device"></th>
+                      <th scope="col" data-i18n="sessions.table_ip"></th>
+                      <th scope="col" data-i18n="sessions.table_seen"></th>
+                      <th scope="col" data-i18n="sessions.table_signed_in"></th>
+                      <th scope="col" data-i18n="sessions.table_actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <!-- Who may read photos with the server's Anthropic key (ai_access.js). -->
+          <section class="card" id="ai-access-panel" data-path="/admin/users/ai-access" hidden>
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="ai_access.heading"></h3>
+              <p class="small" data-i18n="ai_access.text"></p>
+              <p id="ai-access-nokey" class="small text-warning-emphasis" data-i18n="ai_access.no_server_key" hidden></p>
+              <div class="form-check form-switch mb-3">
+                <input id="ai-access-default" class="form-check-input" type="checkbox" role="switch" />
+                <label for="ai-access-default" class="form-check-label" data-i18n="ai_access.default_label"></label>
+              </div>
+              <div class="table-responsive">
+                <table id="ai-access-table" class="table align-middle">
+                  <thead>
+                    <tr>
+                      <th scope="col" data-i18n="ai_access.col_person"></th>
+                      <th scope="col" data-i18n="ai_access.col_access"></th>
+                      <th scope="col" data-i18n="ai_access.col_result"></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- One link a whole group can join through; see invites.js. -->
+        <section class="view" data-view="invite-links" data-path="/admin/invite-links" id="invite-links-panel" hidden>
+          <h2 class="view-title" data-i18n="invite_links.heading"></h2>
+          <p class="view-description" data-i18n="invite_links.description"></p>
+
+          <section class="card">
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="invite_links.create_heading"></h3>
+              <form id="create-invite-form" class="row g-3 align-items-end" autocomplete="off">
+                <div class="col-md">
+                  <label for="invite-label" class="form-label" data-i18n="invite_links.label_label"></label>
+                  <input id="invite-label" class="form-control" name="label" maxlength="80" required
+                         data-i18n-attr="placeholder:invite_links.label_placeholder" />
+                </div>
+                <div class="col-6 col-md">
+                  <label for="invite-uses" class="form-label" data-i18n="invite_links.uses_label"></label>
+                  <input id="invite-uses" class="form-control" name="max_uses" type="number" min="1" max="1000" value="10" required inputmode="numeric" />
+                </div>
+                <div class="col-6 col-md">
+                  <label for="invite-days" class="form-label" data-i18n="invite_links.days_label"></label>
+                  <input id="invite-days" class="form-control" name="days" type="number" min="1" max="365" value="30" required inputmode="numeric" />
+                </div>
+                <div class="col-md-auto">
+                  <button type="submit" class="btn btn-primary" data-i18n="invite_links.create_button"></button>
+                </div>
+              </form>
+
+              <div id="invite-link-box" class="alert alert-info alert-dismissible mt-3 mb-0" hidden>
+                <button type="button" class="btn-close" data-box-close="invite-label" data-i18n-attr="aria-label:nav.close"></button>
+                <p class="mb-2" data-i18n="invite_links.link_notice"></p>
+                <div class="link-box">
+                  <code id="invite-link-value"></code>
+                  <button id="copy-invite-button" class="btn btn-sm btn-outline-secondary" data-i18n="invite_links.copy_button"></button>
+                  <button id="invite-link-qr-button" class="btn btn-sm btn-outline-secondary" data-i18n="ui.qr_button"></button>
+                </div>
+                <canvas id="invite-link-qr" class="link-qr" role="img" data-i18n-attr="aria-label:ui.qr_label" hidden></canvas>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="invite_links.list_heading"></h3>
+              <div role="search">
+                <label for="invites-search" class="visually-hidden" data-i18n="invite_links.search_label"></label>
+                <input id="invites-search" class="form-control" type="search" autocomplete="off"
+                       data-i18n-attr="placeholder:invite_links.search_label" />
+              </div>
+
+              <div class="table-responsive mt-3">
+                <table id="invite-links-table" class="table table-hover align-middle mb-0" data-empty="invite_links.empty">
+                  <thead>
+                    <tr>
+                      <th scope="col" data-sort="label"><button type="button" class="th-sort" data-i18n="invite_links.table_label"></button></th>
+                      <th scope="col" data-sort="used"><button type="button" class="th-sort" data-i18n="invite_links.table_joined"></button></th>
+                      <th scope="col" data-i18n="invite_links.table_status"></th>
+                      <th scope="col" data-sort="expires_at"><button type="button" class="th-sort" data-i18n="invite_links.table_expires"></button></th>
+                      <th scope="col" data-i18n="invite_links.table_actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- Every key in the app, whoever owns it: the admin answer to "what
+             has standing access", and where a lost laptop's key gets killed. -->
+        <section class="view" data-view="all-keys" data-path="/admin/api-keys" id="admin-keys-panel" hidden>
+          <h2 class="view-title" data-i18n="admin_keys.heading"></h2>
+          <p class="view-description" data-i18n="admin_keys.description"></p>
+
+          <!-- A key that acts as someone else. keys.js fills the picker with
+               only the accounts the server would allow. -->
+          <section class="card">
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="admin_keys.create_heading"></h3>
+              <p class="text-body-secondary" data-i18n="admin_keys.create_description"></p>
+              <form id="create-user-key-form" class="row g-3 align-items-end" autocomplete="off">
+                <div class="col-md">
+                  <label for="user-key-user" class="form-label" data-i18n="admin_keys.user_label"></label>
+                  <select id="user-key-user" class="form-select" name="user_id" required></select>
+                </div>
+                <div class="col-md">
+                  <label for="user-key-name" class="form-label" data-i18n="api_keys.name_label"></label>
+                  <input id="user-key-name" class="form-control" name="name" maxlength="80" required
+                         data-i18n-attr="placeholder:api_keys.name_placeholder" />
+                </div>
+                <div class="col-md">
+                  <label for="user-key-role" class="form-label" data-i18n="api_keys.role_label"></label>
+                  <select id="user-key-role" class="form-select" name="role">
+                    <option value="user" data-i18n="api_keys.role_user"></option>
+                    <option value="admin" data-i18n="api_keys.role_admin"></option>
+                  </select>
+                </div>
+                <div class="col-md">
+                  <label for="user-key-days" class="form-label" data-i18n="api_keys.days_label"></label>
+                  <input id="user-key-days" class="form-control" name="expires_in_days" type="number" min="0" max="3650" inputmode="numeric"
+                         data-i18n-attr="placeholder:api_keys.days_placeholder" />
+                </div>
+                <div class="col-md-auto">
+                  <button type="submit" class="btn btn-primary" data-i18n="api_keys.create_button"></button>
+                </div>
+              </form>
+
+              <div id="user-key-secret-box" class="alert alert-info alert-dismissible mt-3 mb-0" hidden>
+                <button type="button" class="btn-close" data-box-close="user-key-name" data-i18n-attr="aria-label:nav.close"></button>
+                <p class="mb-2" data-i18n="api_keys.secret_notice"></p>
+                <div class="link-box">
+                  <code id="user-key-secret-value"></code>
+                  <button id="copy-user-key-button" type="button" class="btn btn-sm btn-outline-secondary" data-i18n="api_keys.copy_button"></button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="admin_keys.list_heading"></h3>
+              <div role="search">
+                <label for="admin-keys-search" class="visually-hidden" data-i18n="api_keys.all_search_label"></label>
+                <input id="admin-keys-search" class="form-control" type="search" autocomplete="off"
+                       data-i18n-attr="placeholder:api_keys.all_search_label" />
+              </div>
+              <div class="form-check mt-2">
+                <input id="admin-keys-live-only" class="form-check-input" type="checkbox" />
+                <label for="admin-keys-live-only" class="form-check-label" data-i18n="api_keys.live_only_label"></label>
+              </div>
+
+              <div class="table-responsive mt-3">
+                <table id="admin-keys-table" class="table table-hover align-middle mb-0" data-empty="api_keys.all_empty">
+                  <thead>
+                    <tr>
+                      <th scope="col" data-sort="display_name"><button type="button" class="th-sort" data-i18n="admin_keys.table_owner"></button></th>
+                      <th scope="col" data-sort="name"><button type="button" class="th-sort" data-i18n="api_keys.table_name"></button></th>
+                      <th scope="col" data-sort="role"><button type="button" class="th-sort" data-i18n="api_keys.table_role"></button></th>
+                      <th scope="col" data-i18n="api_keys.table_status"></th>
+                      <th scope="col" data-sort="last_used_at"><button type="button" class="th-sort" data-i18n="api_keys.table_last_used"></button></th>
+                      <th scope="col" data-sort="expires_at"><button type="button" class="th-sort" data-i18n="api_keys.table_expires"></button></th>
+                      <th scope="col" data-i18n="api_keys.table_actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- The activity log, owner only; see logs.js. data-no-track keeps
+             reading the log from writing to it (track.js). -->
+        <section class="view view-full" data-view="logs" data-path="/admin/logs" id="logs-panel" data-no-track hidden>
+          <h2 class="view-title" data-i18n="logs.heading"></h2>
+          <p class="view-description" data-i18n="logs.description"></p>
+
+          <section class="card">
+            <div class="card-body">
+              <!-- Three columns: the search field, the date button centred in
+                   the row, and Live/Prune at the right end. The two outer
+                   columns are equal, which is what keeps the button centred. -->
+              <form id="logs-search-form" class="row g-2 align-items-end" role="search" autocomplete="off">
+                <div class="col-md">
+                  <label for="logs-query" class="form-label" data-i18n="logs.search_label"></label>
+                  <input id="logs-query" class="form-control" type="search" name="q" maxlength="200"
+                         data-i18n-attr="placeholder:logs.search_placeholder" />
+                </div>
+                <!-- One day at a time; the calendar picks which. It opens from
+                     this button rather than taking a column beside the log:
+                     the log is a table, and a table gets the whole width. See
+                     logs.js, and "Desktop layout" in references/frontend.md. -->
+                <div class="col-md-auto text-center">
+                  <div class="dropdown dropdown-center log-date-picker">
+                    <button type="button" id="logs-date-button" class="btn btn-outline-secondary dropdown-toggle"
+                            data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"
+                            data-i18n-attr="title:logs.calendar_label">
+                      <i class="bi bi-calendar3" aria-hidden="true"></i> <span id="logs-date-label"></span>
+                    </button>
+                    <div class="dropdown-menu log-cal-menu">
+                      <div class="log-calendar" role="group" data-i18n-attr="aria-label:logs.calendar_label">
+                        <div class="log-cal-head">
+                          <button type="button" id="logs-cal-prev" class="btn btn-sm btn-outline-secondary" data-i18n-attr="aria-label:logs.prev_month,title:logs.prev_month">
+                            <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                          </button>
+                          <span id="logs-cal-title" class="log-cal-title" aria-live="polite"></span>
+                          <button type="button" id="logs-cal-next" class="btn btn-sm btn-outline-secondary" data-i18n-attr="aria-label:logs.next_month,title:logs.next_month">
+                            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                          </button>
+                          <button type="button" id="logs-cal-today" class="btn btn-sm btn-outline-secondary ms-auto" data-i18n="logs.today_button"></button>
+                        </div>
+                        <div id="logs-cal-grid" class="log-cal-grid"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md row-actions justify-content-center justify-content-md-end">
+                  <button type="button" id="logs-live" class="btn btn-outline-secondary" aria-pressed="false">
+                    <i class="bi bi-broadcast" aria-hidden="true"></i> <span data-i18n="logs.live_button"></span>
+                  </button>
+                  <button type="button" id="logs-prune" class="btn btn-outline-secondary" data-i18n="logs.prune_button"></button>
+                </div>
+              </form>
+              <p class="form-text" data-i18n="logs.search_help"></p>
+              <div id="logs-kinds" class="row-actions" role="group" data-i18n-attr="aria-label:logs.kinds_label"></div>
+              <p id="logs-settings" class="small text-body-secondary mt-3 mb-0"></p>
+            </div>
+          </section>
+
+          <!-- What the owner calls addresses. See Logs.refreshNames. -->
+          <details class="card card-collapse">
+            <summary id="ip-names-summary" class="card-header ip-names-summary"></summary>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table id="ip-names-table" class="table table-hover align-middle" data-empty="logs.ip_names_empty">
+                  <thead>
+                    <tr>
+                      <th scope="col" data-i18n="logs.table_ip_name"></th>
+                      <th scope="col" data-i18n="logs.table_ip_target"></th>
+                      <th scope="col" data-i18n="logs.table_ip_actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <button id="ip-names-add" type="button" class="btn btn-sm btn-outline-secondary" data-i18n="logs.ip_names_add"></button>
+            </div>
+          </details>
+
+          <section class="card">
+            <div class="card-body">
+              <p id="logs-empty" class="text-body-secondary mb-0" hidden></p>
+              <div id="logs-day"></div>
+            </div>
+          </section>
+        </section>
+
+        <!-- Telling other systems what happens here, owner only; see webhooks.js. -->
+        <section class="view" data-view="webhooks" data-path="/admin/webhooks" id="webhooks-panel" hidden>
+          <h2 class="view-title" data-i18n="webhooks.heading"></h2>
+          <p class="view-description" data-i18n="webhooks.description"></p>
+
+          <section class="card">
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="webhooks.create_heading"></h3>
+              <form id="create-webhook-form" autocomplete="off">
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label for="webhook-name" class="form-label" data-i18n="webhooks.name_label"></label>
+                    <input id="webhook-name" class="form-control" maxlength="80" required
+                           data-i18n-attr="placeholder:webhooks.name_placeholder" />
+                  </div>
+                  <div class="col-md-8">
+                    <label for="webhook-url" class="form-label" data-i18n="webhooks.url_label"></label>
+                    <input id="webhook-url" class="form-control" type="url" maxlength="2000" required
+                           data-i18n-attr="placeholder:webhooks.url_placeholder" />
+                  </div>
+                </div>
+                <fieldset class="mt-3">
+                  <legend class="form-label fs-6" data-i18n="webhooks.events_label"></legend>
+                  <div class="form-check">
+                    <input id="webhook-all-events" class="form-check-input" type="checkbox" checked />
+                    <label for="webhook-all-events" class="form-check-label" data-i18n="webhooks.all_events"></label>
+                  </div>
+                  <div id="webhook-events"></div>
+                </fieldset>
+                <button type="submit" class="btn btn-primary mt-3" data-i18n="webhooks.create_button"></button>
+              </form>
+
+              <div id="webhook-secret-box" class="alert alert-info alert-dismissible mt-3 mb-0" hidden>
+                <button type="button" class="btn-close" data-box-close="webhook-name" data-i18n-attr="aria-label:nav.close"></button>
+                <p id="webhook-secret-notice" class="mb-2" data-i18n="webhooks.secret_notice"></p>
+                <div class="link-box">
+                  <code id="webhook-secret-value"></code>
+                  <button id="copy-webhook-button" class="btn btn-sm btn-outline-secondary" data-i18n="webhooks.copy_button"></button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="webhooks.list_heading"></h3>
+              <div role="search">
+                <label for="webhooks-search" class="visually-hidden" data-i18n="webhooks.search_label"></label>
+                <input id="webhooks-search" class="form-control" type="search" autocomplete="off"
+                       data-i18n-attr="placeholder:webhooks.search_label" />
+              </div>
+
+              <div class="table-responsive mt-3">
+                <table id="webhooks-table" class="table table-hover align-middle mb-0" data-empty="webhooks.empty">
+                  <thead>
+                    <tr>
+                      <th scope="col" data-sort="name"><button type="button" class="th-sort" data-i18n="webhooks.table_name"></button></th>
+                      <th scope="col" data-sort="url"><button type="button" class="th-sort" data-i18n="webhooks.table_url"></button></th>
+                      <th scope="col" data-sort="enabled"><button type="button" class="th-sort" data-i18n="webhooks.table_status"></button></th>
+                      <th scope="col" data-i18n="webhooks.table_actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <!-- One webhook's recent deliveries, from its row's menu. -->
+          <section id="webhook-deliveries" class="card" hidden>
+            <div class="card-body">
+              <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                <h3 id="webhook-deliveries-heading" class="card-title mb-0"></h3>
+                <button id="webhook-deliveries-close" type="button" class="btn-close" data-i18n-attr="aria-label:nav.close"></button>
+              </div>
+              <div class="table-responsive">
+                <table id="webhook-deliveries-table" class="table table-hover align-middle mb-0" data-empty="webhooks.deliveries_empty">
+                  <thead>
+                    <tr>
+                      <th scope="col" data-i18n="webhooks.table_event"></th>
+                      <th scope="col" data-i18n="webhooks.table_delivery"></th>
+                      <th scope="col" data-i18n="webhooks.table_attempts"></th>
+                      <th scope="col" data-i18n="webhooks.table_result"></th>
+                      <th scope="col" data-i18n="webhooks.table_when"></th>
+                      <th scope="col" data-i18n="webhooks.table_actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- Background jobs, owner only; see jobs.js. -->
+        <section class="view" data-view="jobs" data-path="/admin/jobs" id="jobs-panel" hidden>
+          <h2 class="view-title" data-i18n="jobs.heading"></h2>
+          <p class="view-description" data-i18n="jobs.description"></p>
+          <section class="card">
+            <div class="card-body">
+              <div class="table-responsive">
+                <table id="jobs-table" class="table table-hover align-middle mb-0" data-empty="jobs.empty">
+                  <thead>
+                    <tr>
+                      <th scope="col" data-i18n="jobs.table_name"></th>
+                      <th scope="col" data-i18n="jobs.table_status"></th>
+                      <th scope="col" data-i18n="jobs.table_last"></th>
+                      <th scope="col" data-i18n="jobs.table_next"></th>
+                      <th scope="col" data-i18n="jobs.table_note"></th>
+                      <th scope="col" data-i18n="jobs.table_actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- Owner only: config.yaml, one field per setting. See js/settings.js. -->
+        <section class="view" data-view="settings" data-path="/admin/settings" id="settings-panel" hidden>
+          <h2 class="view-title" data-i18n="settings.heading"></h2>
+          <p class="view-description" data-i18n="settings.description"></p>
+          <!-- The owner's Anthropic API key, for Smart Photo Extraction (ai_key.js). -->
+          <section class="card" id="ai-key-card" data-path="/admin/settings/ai" hidden>
+            <div class="card-body">
+              <h3 class="card-title" data-i18n="ai.heading"></h3>
+              <p class="small" data-i18n="ai.text"></p>
+              <p id="ai-key-state" class="small fw-semibold"></p>
+              <form id="ai-key-form" class="row g-2 align-items-end">
+                <div class="col-12 col-md-8">
+                  <label for="ai-key-input" class="form-label" data-i18n="ai.key_label"></label>
+                  <input id="ai-key-input" class="form-control" type="password" autocomplete="off" maxlength="300" data-no-track />
+                </div>
+                <div class="col-6 col-md-2 d-grid">
+                  <button type="submit" class="btn btn-primary" data-i18n="ai.save"></button>
+                </div>
+                <div class="col-6 col-md-2 d-grid">
+                  <button id="ai-key-remove" type="button" class="btn btn-outline-danger" data-i18n="ai.remove"></button>
+                </div>
+              </form>
+            </div>
+          </section>
+          <section class="card">
+            <div class="card-body">
+              <p class="small text-body-secondary mb-1"><code id="settings-file"></code></p>
+              <p id="settings-secret" class="small text-body-secondary"></p>
+
+              <div id="settings-invalid" class="alert alert-danger settings-help" role="alert" hidden></div>
+              <div id="settings-stale" class="alert alert-warning" role="alert" data-i18n="settings.stale" hidden></div>
+              <div id="settings-read-only" class="alert alert-secondary" role="status" data-i18n="settings.read_only" hidden></div>
+
+              <!-- Outside the form, so Enter in the filter is not a save. -->
+              <div class="settings-tools" role="search">
+                <div class="d-flex align-items-center gap-2">
+                  <label for="settings-filter" class="visually-hidden" data-i18n="settings.filter_label"></label>
+                  <input id="settings-filter" class="form-control" type="search" autocomplete="off"
+                         data-i18n-attr="placeholder:settings.filter_label" />
+                  <span id="settings-filter-status" class="small text-body-secondary text-nowrap" role="status"></span>
+                </div>
+                <nav id="settings-jump" class="settings-jump" data-i18n-attr="aria-label:settings.jump_label"></nav>
+              </div>
+
+              <form id="settings-form" autocomplete="off" novalidate>
+                <div id="settings-sections"></div>
+                <div id="settings-problems" class="alert alert-danger settings-help" role="alert" hidden></div>
+                <div id="settings-changed" class="alert alert-warning d-flex align-items-center gap-2" role="alert" hidden>
+                  <span class="me-auto" data-i18n="settings.changed_on_disk"></span>
+                </div>
+                <div class="settings-actions row-actions">
+                  <button type="submit" id="settings-save" class="btn btn-primary" data-i18n="settings.save_button" disabled></button>
+                  <button type="button" id="settings-reload" class="btn btn-outline-secondary" data-i18n="settings.reload_button"></button>
+                  <span id="settings-unsaved" class="small text-body-secondary"></span>
+                </div>
+              </form>
+            </div>
+          </section>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <!-- "Saved.", "Copied.", "API key deleted · Undo": see Dom.toast. -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="toast" class="toast border-0" role="status" aria-live="polite" aria-atomic="true">
+      <div id="toast-body" class="toast-body d-flex align-items-center gap-2">
+        <span id="toast-text" class="me-auto"></span>
+        <button id="toast-action" type="button" class="btn btn-sm btn-light" hidden></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Asks before anything that cannot be taken back: see Dom.confirm. -->
+  <div id="confirm-modal" class="modal fade" tabindex="-1" aria-labelledby="confirm-text" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div id="confirm-text" class="modal-body"></div>
+        <div class="modal-footer">
+          <button id="confirm-cancel" type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-i18n="ui.cancel"></button>
+          <button id="confirm-ok" type="button" class="btn btn-danger" data-i18n="ui.confirm"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- What ? opens: see shortcuts.js. -->
+  <div id="shortcuts-modal" class="modal fade" tabindex="-1" aria-labelledby="shortcuts-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="shortcuts-title" class="modal-title fs-5" data-i18n="shortcuts.heading"></h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" data-i18n-attr="aria-label:nav.close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Filled from the list in shortcuts.js, with this person's own keys. -->
+          <dl id="shortcut-list" class="shortcut-list mb-0"></dl>
+        </div>
+        <div class="modal-footer">
+          <a id="shortcuts-list-change" href="/shortcuts" class="btn btn-link" data-i18n="shortcuts.list_change" hidden></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- A small form in a dialog: see Dom.form, which fills it in. -->
+  <div id="form-modal" class="modal fade" tabindex="-1" aria-labelledby="form-modal-title" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form id="form-modal-form" autocomplete="off">
+          <div class="modal-header">
+            <h2 id="form-modal-title" class="modal-title fs-5"></h2>
+          </div>
+          <div class="modal-body">
+            <div id="form-modal-fields" class="vstack gap-3"></div>
+            <div id="form-modal-problem" class="alert alert-danger mt-3 mb-0" role="alert" hidden></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-i18n="ui.cancel"></button>
+            <button id="form-modal-save" type="submit" class="btn btn-primary"></button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!--
+    Plain scripts in dependency order. No bundler, no modules that need a
+    build step: each file adds one global and the browser runs them as-is.
+    Third-party libraries go in /vendor/ (downloaded once, served by us) so
+    the Content-Security-Policy can stay locked to 'self'.
+  -->
+  <script src="/vendor/bootstrap.bundle.min.js"></script>
+  <script src="/vendor/qrcode.js"></script>
+  <script src="/js/dom.js"></script>
+  <script src="/js/qr.js"></script>
+  <script src="/js/login_links.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/undo.js"></script>
+  <script src="/js/shortcuts.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/track.js"></script>
+  <script src="/js/nav.js"></script>
+  <script src="/js/pager.js"></script>
+  <script src="/js/keys.js"></script>
+  <script src="/js/mcp.js"></script>
+  <script src="/js/sessions.js"></script>
+  <script src="/js/files.js"></script>
+  <script src="/js/about.js"></script>
+  <script src="/js/join.js"></script>
+  <script src="/js/pin.js"></script>
+  <script src="/js/password.js"></script>
+  <script src="/js/two_factor.js"></script>
+  <script src="/js/invites.js"></script>
+  <script src="/js/logs.js"></script>
+  <script src="/js/jobs.js"></script>
+  <script src="/js/webhooks.js"></script>
+  <script src="/js/settings.js"></script>
+  <script src="/js/themes_editor.js"></script>
+  <script src="/js/fresh.js"></script>
+  <script src="/js/live.js"></script>
+  <script src="/vendor/zxing.min.js"></script>
+  <script src="/js/org.js"></script>
+  <script src="/js/item_editor.js"></script>
+  <script src="/js/scan.js"></script>
+  <script src="/js/inventory.js"></script>
+  <script src="/js/labels.js"></script>
+  <script src="/js/container.js"></script>
+  <script src="/js/locations.js"></script>
+  <script src="/js/print.js"></script>
+  <script src="/js/reminders.js"></script>
+  <script src="/js/reports.js"></script>
+  <script src="/js/households.js"></script>
+  <script src="/js/trash.js"></script>
+  <script src="/js/ai_key.js"></script>
+  <script src="/js/my_ai.js"></script>
+  <script src="/js/ai_access.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

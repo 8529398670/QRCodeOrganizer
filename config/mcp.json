@@ -1,0 +1,5518 @@
+{
+  "auth": "Authorization: Bearer <API key>",
+  "description": "Every tool POST /mcp offers. Written by scripts/api_docs.sh from the registered tools; do not edit by hand. A key sees the tools its role allows (adminOnly ones need an admin key), and a tool whose feature is switched off answers like one that does not exist. route is the HTTP route the tool stands for, with the same rules; http_only are the routes a key may call that have no tool, and why.",
+  "endpoint": "/mcp",
+  "http_only": [
+    {
+      "reason": "The API reference itself; GET /api/mcp.json is the MCP one.",
+      "route": "GET /api/api.json"
+    },
+    {
+      "reason": "The API reference itself, for people; GET /api/api.json is the same as JSON.",
+      "route": "GET /api/api.md"
+    },
+    {
+      "reason": "A CSV file is not JSON: GET this address with the same Authorization header.",
+      "route": "GET /api/households/{household_id}/export.csv"
+    },
+    {
+      "reason": "Photo bytes are not JSON: GET this address with the same Authorization header.",
+      "route": "GET /api/households/{household_id}/photos/{file_id}"
+    },
+    {
+      "reason": "The MCP reference itself; tools/list gives the same list.",
+      "route": "GET /api/mcp.json"
+    },
+    {
+      "reason": "The MCP reference itself, for people; tools/list gives the same list.",
+      "route": "GET /api/mcp.md"
+    },
+    {
+      "reason": "File bytes: MCP messages are JSON, and clients cap their size. files_start_upload says where to send each piece, with the same key.",
+      "route": "POST /api/files/{file_id}/chunks/{index}"
+    },
+    {
+      "reason": "Ends a browser session; a key has none to end.",
+      "route": "POST /api/logout"
+    },
+    {
+      "reason": "The browser's own activity reports (track.js), not an action.",
+      "route": "POST /api/logs/events"
+    },
+    {
+      "reason": "The MCP endpoint itself.",
+      "route": "POST /mcp"
+    }
+  ],
+  "protocolVersions": [
+    "2025-11-25",
+    "2025-06-18",
+    "2025-03-26"
+  ],
+  "tools": [
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Save a photo draft's items"
+      },
+      "description": "Put the items you kept from a draft into its container, and mark the draft done.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "extraction_id": {
+            "description": "The draft's id, from extract_photo.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "items": {
+            "description": "The items to keep, as they should be saved -- the draft's, edited as needed, with photos cropped from it if you like.",
+            "items": {
+              "properties": {
+                "barcode": {
+                  "maxLength": 200,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "brand": {
+                  "maxLength": 80,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "clear_low_stock": {
+                  "description": "Stop low-stock reminders.",
+                  "type": "boolean"
+                },
+                "clear_remind_days": {
+                  "description": "Use the household's reminder lead again.",
+                  "type": "boolean"
+                },
+                "description": {
+                  "maxLength": 4000,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "expires": {
+                  "description": "Expiry date, YYYY-MM-DD, or empty.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "fields": {
+                  "description": "Custom field values by field id (see the household's fields). Replaces them all.",
+                  "oneOf": [
+                    {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "lent_due": {
+                  "description": "When it should come back, YYYY-MM-DD, or empty.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "lent_to": {
+                  "description": "Who has it on loan; empty when it is back.",
+                  "maxLength": 80,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "low_stock": {
+                  "description": "Remind when the quantity drops to this or below.",
+                  "minimum": 0,
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "name": {
+                  "maxLength": 80,
+                  "minLength": 1,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "photos": {
+                  "description": "File ids of its photos, in order.",
+                  "oneOf": [
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "purchase_date": {
+                  "description": "YYYY-MM-DD, or empty.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "quantity": {
+                  "description": "How many there are. A new item has 1.",
+                  "minimum": 0,
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "receipts": {
+                  "description": "File ids of receipts or warranty papers.",
+                  "oneOf": [
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "remind_days": {
+                  "description": "Days before the expiry to remind, instead of the household's lead.",
+                  "maximum": 365,
+                  "minimum": 0,
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "serial": {
+                  "maxLength": 120,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "tags": {
+                  "description": "Words to find it by. Stored in lower case.",
+                  "oneOf": [
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "unit": {
+                  "description": "pcs, rolls, kg, ...",
+                  "maxLength": 20,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "value": {
+                  "description": "What one is worth, for the insurance list.",
+                  "minimum": 0,
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                }
+              },
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "extraction_id",
+          "household_id",
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "accept_extraction",
+      "route": "POST /api/households/{household_id}/extractions/{extraction_id}/accept",
+      "title": "Save a photo draft's items"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Add to or take from an item's count"
+      },
+      "description": "Change an item's quantity by an amount, such as -1 when one is used up. Two people doing this at once both count.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "delta": {
+            "description": "How many to add; negative to take some out. Never goes below 0.",
+            "type": "number"
+          },
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "item_id": {
+            "description": "The item's id, from list_items, search_inventory or get_label.",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "delta",
+          "household_id",
+          "item_id"
+        ],
+        "type": "object"
+      },
+      "name": "adjust_quantity",
+      "route": "POST /api/households/{household_id}/items/{item_id}/adjust",
+      "title": "Add to or take from an item's count"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Stop an account's login link working (admin)"
+      },
+      "description": "Void an account's live login link without making a new one: a link that went somewhere it should not have. Devices it already signed in stay signed in; admin_revoke_access ends those too. Answers with removed: 0 or 1.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "user_id": {
+            "description": "The account's id, from GET /api/admin/users (admin_list_users over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "type": "object"
+      },
+      "name": "admin_cancel_login_link",
+      "route": "POST /api/admin/users/{user_id}/cancel-login-link",
+      "title": "Stop an account's login link working (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Stop an account's login link working, for many at once (admin)"
+      },
+      "description": "Runs admin_cancel_login_link once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "user_id": {
+                  "description": "The account's id, from GET /api/admin/users (admin_list_users over MCP).",
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "user_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "admin_cancel_login_link_bulk",
+      "route": "POST /api/bulk/admin/users/cancel-login-link",
+      "title": "Stop an account's login link working, for many at once (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Create an invite link (admin)"
+      },
+      "description": "One link for a group: each person who opens it joins as a new user, up to max_uses people, for days days. Answers with join_url (shown only now) and the link's details. Revoking or deleting this API key switches the link off.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "days": {
+            "maximum": 365,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "label": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "max_uses": {
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "days",
+          "label",
+          "max_uses"
+        ],
+        "type": "object"
+      },
+      "name": "admin_create_invite_link",
+      "route": "POST /api/admin/invite-links",
+      "title": "Create an invite link (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Create an account (admin)"
+      },
+      "description": "Make a new account and its first login link, to hand to the person. role is admin or user. Answers with user_id and the link. Answers with login_url (open it to sign in; it works once unless max_uses says otherwise), expires_at and max_uses. Any older link the account could still use stops working; its signed-in devices stay signed in. Revoking or deleting this API key voids the link while it is unused, and signs out every device it signed in.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "display_name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "expires_in_minutes": {
+            "description": "0 never expires. Default auth.login_token_ttl_seconds for a link that works once, auth.multi_use_login_token_ttl_seconds otherwise.",
+            "maximum": 525600,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "max_uses": {
+            "description": "Sign-ins the link allows: 1-1000, or 0 for unlimited. Default 1.",
+            "maximum": 1000,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "role": {
+            "enum": [
+              "admin",
+              "user"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "display_name",
+          "role"
+        ],
+        "type": "object"
+      },
+      "name": "admin_create_user",
+      "route": "POST /api/admin/users",
+      "title": "Create an account (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Delete an invite link (admin)"
+      },
+      "description": "Take an invite link off the list and stop it working. The accounts it made stay. admin_restore_invite_link undoes it for a few minutes.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "link_id": {
+            "description": "The link's id, from GET /api/admin/invite-links (admin_list_invite_links over MCP).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "link_id"
+        ],
+        "type": "object"
+      },
+      "name": "admin_delete_invite_link",
+      "route": "POST /api/admin/invite-links/{link_id}/delete",
+      "title": "Delete an invite link (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Delete an invite link, for many at once (admin)"
+      },
+      "description": "Runs admin_delete_invite_link once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "link_id": {
+                  "description": "The link's id, from GET /api/admin/invite-links (admin_list_invite_links over MCP).",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "link_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "admin_delete_invite_link_bulk",
+      "route": "POST /api/bulk/admin/invite-links/delete",
+      "title": "Delete an invite link, for many at once (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Delete an account (admin)"
+      },
+      "description": "Remove an account for good, with its sessions, login link and API keys. Cannot be undone: admin_set_user_disabled is the reversible version. Only the owner deletes an admin; nobody deletes the owner or themselves.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "user_id": {
+            "description": "The account's id, from GET /api/admin/users (admin_list_users over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "type": "object"
+      },
+      "name": "admin_delete_user",
+      "route": "POST /api/admin/users/{user_id}/delete",
+      "title": "Delete an account (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Delete an account, for many at once (admin)"
+      },
+      "description": "Runs admin_delete_user once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "user_id": {
+                  "description": "The account's id, from GET /api/admin/users (admin_list_users over MCP).",
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "user_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "admin_delete_user_bulk",
+      "route": "POST /api/bulk/admin/users/delete",
+      "title": "Delete an account, for many at once (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "Default themes (admin)"
+      },
+      "description": "The theme list everyone without their own list sees. themes is null while the built-in ones apply.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "name": "admin_get_theme_defaults",
+      "route": "GET /api/admin/theme-defaults",
+      "title": "Default themes (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "Who may use the server's Anthropic key (admin)"
+      },
+      "description": "The default for everyone, and each person's choice: follow the default, may use the server's key, or must bring their own. Someone with their own key always uses it.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "default": 200,
+            "description": "Rows to return. Default 200.",
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "offset": {
+            "description": "Rows to skip: the next value of the previous page.",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "admin_list_ai_access",
+      "route": "GET /api/admin/ai-access",
+      "title": "Who may use the server's Anthropic key (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "List everyone's files (admin)"
+      },
+      "description": "Every account's files, a page at a time, with whose each one is (user_id, user_name). next is the offset of the following page, or null on the last one.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "dir": {
+            "description": "Default asc.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string"
+          },
+          "limit": {
+            "default": 200,
+            "description": "Rows to return. Default 200.",
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "offset": {
+            "description": "Rows to skip: the next value of the previous page.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "q": {
+            "description": "Keep files whose name or owner contains this, in any case.",
+            "type": "string"
+          },
+          "sort": {
+            "description": "Field to sort the whole list by. Rows without it go last.",
+            "enum": [
+              "name",
+              "user_name",
+              "size",
+              "created_at"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "admin_list_files",
+      "route": "GET /api/admin/files",
+      "title": "List everyone's files (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "List invite links (admin)"
+      },
+      "description": "Group invite links, a page at a time: label, places used and left, expiry, and whether each still works. The links themselves are never shown again after creation. next is the offset of the following page, or null on the last one.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "dir": {
+            "description": "Default asc.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string"
+          },
+          "limit": {
+            "default": 200,
+            "description": "Rows to return. Default 200.",
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "offset": {
+            "description": "Rows to skip: the next value of the previous page.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "q": {
+            "description": "Keep links whose label or maker contains this, in any case.",
+            "type": "string"
+          },
+          "sort": {
+            "description": "Field to sort the whole list by. Rows without it go last.",
+            "enum": [
+              "label",
+              "used",
+              "expires_at"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "admin_list_invite_links",
+      "route": "GET /api/admin/invite-links",
+      "title": "List invite links (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "An account's signed-in devices (admin)"
+      },
+      "description": "Where an account is signed in: every session, with when it started and was last seen. Addresses are shown to the owner only, and only the owner sees the owner's.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "default": 200,
+            "description": "Rows to return. Default 200.",
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "offset": {
+            "description": "Rows to skip: the next value of the previous page.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "user_id": {
+            "description": "The account's id, from GET /api/admin/users (admin_list_users over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "type": "object"
+      },
+      "name": "admin_list_user_sessions",
+      "route": "GET /api/admin/users/{user_id}/sessions",
+      "title": "An account's signed-in devices (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "List users (admin)"
+      },
+      "description": "Accounts, a page at a time, including disabled ones, with each one's role and which is the owner. next is the offset of the following page, or null on the last one.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "dir": {
+            "description": "Default asc.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string"
+          },
+          "limit": {
+            "default": 200,
+            "description": "Rows to return. Default 200.",
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "offset": {
+            "description": "Rows to skip: the next value of the previous page.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "q": {
+            "description": "Keep accounts whose name or username contains this, in any case.",
+            "type": "string"
+          },
+          "sort": {
+            "description": "Field to sort the whole list by. Rows without it go last.",
+            "enum": [
+              "display_name",
+              "role",
+              "disabled",
+              "created_at"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "admin_list_users",
+      "route": "GET /api/admin/users",
+      "title": "List users (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "A new login link for an account (admin)"
+      },
+      "description": "For someone who lost their device or their link: a fresh login link for their account. Answers with login_url (open it to sign in; it works once unless max_uses says otherwise), expires_at and max_uses. Any older link the account could still use stops working; its signed-in devices stay signed in. Revoking or deleting this API key voids the link while it is unused, and signs out every device it signed in.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "expires_in_minutes": {
+            "description": "0 never expires. Default auth.login_token_ttl_seconds for a link that works once, auth.multi_use_login_token_ttl_seconds otherwise.",
+            "maximum": 525600,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "max_uses": {
+            "description": "Sign-ins the link allows: 1-1000, or 0 for unlimited. Default 1.",
+            "maximum": 1000,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "user_id": {
+            "description": "The account's id, from GET /api/admin/users (admin_list_users over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "type": "object"
+      },
+      "name": "admin_reissue_login",
+      "route": "POST /api/admin/users/{user_id}/reissue-login",
+      "title": "A new login link for an account (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Rename an invite link (admin)"
+      },
+      "description": "Change the label people see on an invite link's join page (1-80 characters). expect, when given, is the label you think it has now.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "expect": {
+            "description": "The label you think it has. Answers 409 if it has another.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "label": {
+            "description": "1-80 characters.",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "link_id": {
+            "description": "The link's id, from GET /api/admin/invite-links (admin_list_invite_links over MCP).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "link_id"
+        ],
+        "type": "object"
+      },
+      "name": "admin_rename_invite_link",
+      "route": "POST /api/admin/invite-links/{link_id}/rename",
+      "title": "Rename an invite link (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Rename someone (admin)"
+      },
+      "description": "Change another account's display name (1-80 characters). Only the owner renames an admin. expect, when given, is the name you think it has now; if it changed meanwhile the rename is refused with the current name.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "display_name": {
+            "description": "1-80 characters.",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "expect": {
+            "description": "The name you think they have. Answers 409 if it is another.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "user_id": {
+            "description": "The account's id, from GET /api/admin/users (admin_list_users over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "display_name",
+          "user_id"
+        ],
+        "type": "object"
+      },
+      "name": "admin_rename_user",
+      "route": "POST /api/admin/users/{user_id}/rename",
+      "title": "Rename someone (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Turn off an account's two-factor (admin)"
+      },
+      "description": "For someone who lost both their phone and their recovery codes: switches their two-factor sign-in off so a login link lets them in again. Only the owner resets an admin's; the owner's is reset from a shell.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "user_id": {
+            "description": "The account's id, from GET /api/admin/users (admin_list_users over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "type": "object"
+      },
+      "name": "admin_reset_two_factor",
+      "route": "POST /api/admin/users/{user_id}/reset-two-factor",
+      "title": "Turn off an account's two-factor (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Turn off an account's two-factor, for many at once (admin)"
+      },
+      "description": "Runs admin_reset_two_factor once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "user_id": {
+                  "description": "The account's id, from GET /api/admin/users (admin_list_users over MCP).",
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "user_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "admin_reset_two_factor_bulk",
+      "route": "POST /api/bulk/admin/users/reset-two-factor",
+      "title": "Turn off an account's two-factor, for many at once (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Undo deleting an invite link (admin)"
+      },
+      "description": "Bring back an invite link deleted in the last few minutes, working as before. The link then counts as this key's: revoking the key switches it off.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "link_id": {
+            "description": "The link's id, from GET /api/admin/invite-links (admin_list_invite_links over MCP).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "link_id"
+        ],
+        "type": "object"
+      },
+      "name": "admin_restore_invite_link",
+      "route": "POST /api/admin/invite-links/{link_id}/restore",
+      "title": "Undo deleting an invite link (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Undo deleting an invite link, for many at once (admin)"
+      },
+      "description": "Runs admin_restore_invite_link once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "link_id": {
+                  "description": "The link's id, from GET /api/admin/invite-links (admin_list_invite_links over MCP).",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "link_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "admin_restore_invite_link_bulk",
+      "route": "POST /api/bulk/admin/invite-links/restore",
+      "title": "Undo deleting an invite link, for many at once (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Revoke a user's access (admin)"
+      },
+      "description": "For an account that may be compromised: ends every session and voids its live login link and every API key it holds, at once. The account stays enabled; admin_reissue_login lets its owner back in. The owner and your own account cannot be revoked.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "user_id": {
+            "description": "The account's id, from GET /api/admin/users (admin_list_users over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "type": "object"
+      },
+      "name": "admin_revoke_access",
+      "route": "POST /api/admin/users/{user_id}/revoke-access",
+      "title": "Revoke a user's access (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Revoke a user's access, for many at once (admin)"
+      },
+      "description": "Runs admin_revoke_access once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "user_id": {
+                  "description": "The account's id, from GET /api/admin/users (admin_list_users over MCP).",
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "user_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "admin_revoke_access_bulk",
+      "route": "POST /api/bulk/admin/users/revoke-access",
+      "title": "Revoke a user's access, for many at once (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Switch off an invite link (admin)"
+      },
+      "description": "Stop an invite link from letting anyone else join or sign in through it. Accounts it already made keep working. Cannot be switched back on.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "link_id": {
+            "description": "The link's id, from GET /api/admin/invite-links (admin_list_invite_links over MCP).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "link_id"
+        ],
+        "type": "object"
+      },
+      "name": "admin_revoke_invite_link",
+      "route": "POST /api/admin/invite-links/{link_id}/revoke",
+      "title": "Switch off an invite link (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Switch off an invite link, for many at once (admin)"
+      },
+      "description": "Runs admin_revoke_invite_link once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "link_id": {
+                  "description": "The link's id, from GET /api/admin/invite-links (admin_list_invite_links over MCP).",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "link_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "admin_revoke_invite_link_bulk",
+      "route": "POST /api/bulk/admin/invite-links/revoke",
+      "title": "Switch off an invite link, for many at once (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Sign out one of an account's devices (admin)"
+      },
+      "description": "End one of an account's sessions, rather than all of them with admin_revoke_access.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "session_id": {
+            "description": "The device's id, from GET /api/account/sessions or GET /api/admin/users/{user_id}/sessions (list_my_sessions or admin_list_user_sessions over MCP).",
+            "type": "string"
+          },
+          "user_id": {
+            "description": "The account's id, from GET /api/admin/users (admin_list_users over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "session_id",
+          "user_id"
+        ],
+        "type": "object"
+      },
+      "name": "admin_revoke_user_session",
+      "route": "POST /api/admin/users/{user_id}/sessions/{session_id}/revoke",
+      "title": "Sign out one of an account's devices (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Sign out one of an account's devices, for many at once (admin)"
+      },
+      "description": "Runs admin_revoke_user_session once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "session_id": {
+                  "description": "The device's id, from GET /api/account/sessions or GET /api/admin/users/{user_id}/sessions (list_my_sessions or admin_list_user_sessions over MCP).",
+                  "type": "string"
+                },
+                "user_id": {
+                  "description": "The account's id, from GET /api/admin/users (admin_list_users over MCP).",
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "session_id",
+                "user_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "admin_revoke_user_session_bulk",
+      "route": "POST /api/bulk/admin/users/sessions/revoke",
+      "title": "Sign out one of an account's devices, for many at once (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Set one person's use of the server's Anthropic key (admin)"
+      },
+      "description": "Let one person use the server's key, make them bring their own, or have them follow the default.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "access": {
+            "description": "default follows the default; shared may use the server's key; own must bring their own.",
+            "enum": [
+              "default",
+              "shared",
+              "own"
+            ],
+            "type": "string"
+          },
+          "user_id": {
+            "description": "The account's id, from GET /api/admin/users (admin_list_users over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "access",
+          "user_id"
+        ],
+        "type": "object"
+      },
+      "name": "admin_set_ai_access",
+      "route": "POST /api/admin/ai-access/{user_id}",
+      "title": "Set one person's use of the server's Anthropic key (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Set one person's use of the server's Anthropic key, for many at once (admin)"
+      },
+      "description": "Runs admin_set_ai_access once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "access": {
+                  "description": "default follows the default; shared may use the server's key; own must bring their own.",
+                  "enum": [
+                    "default",
+                    "shared",
+                    "own"
+                  ],
+                  "type": "string"
+                },
+                "user_id": {
+                  "description": "The account's id, from GET /api/admin/users (admin_list_users over MCP).",
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "user_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {
+              "access": {
+                "description": "default follows the default; shared may use the server's key; own must bring their own.",
+                "enum": [
+                  "default",
+                  "shared",
+                  "own"
+                ],
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "admin_set_ai_access_bulk",
+      "route": "POST /api/bulk/admin/ai-access",
+      "title": "Set one person's use of the server's Anthropic key, for many at once (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Set the default for the server's Anthropic key (admin)"
+      },
+      "description": "Whether people without their own key may use the server's by default.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "default_shared": {
+            "description": "true lets everyone without their own key use the server's; false makes everyone bring their own, unless their row says otherwise.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "default_shared"
+        ],
+        "type": "object"
+      },
+      "name": "admin_set_ai_default",
+      "route": "POST /api/admin/ai-access",
+      "title": "Set the default for the server's Anthropic key (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Change an invite link's places and expiry (admin)"
+      },
+      "description": "Set how many people the link may take in (never fewer than have joined) and, when days is given, a new expiry counted from now. The link then counts as this key's: revoking the key switches it off.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "days": {
+            "description": "Counted from now. Leave out to keep the expiry.",
+            "maximum": 365,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "link_id": {
+            "description": "The link's id, from GET /api/admin/invite-links (admin_list_invite_links over MCP).",
+            "type": "string"
+          },
+          "max_uses": {
+            "description": "Not fewer than have joined.",
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "link_id",
+          "max_uses"
+        ],
+        "type": "object"
+      },
+      "name": "admin_set_invite_link_limits",
+      "route": "POST /api/admin/invite-links/{link_id}/limits",
+      "title": "Change an invite link's places and expiry (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Replace the default themes (admin)"
+      },
+      "description": "Replace the theme list everyone without their own list sees, 1 to 40 themes in the Theme schema of the API reference. null puts the built-in themes back.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "builtins": {
+            "description": "Which built-in themes this list has seen: the highest since in Theme.builtIn (static/js/theme.js) when it was saved. Built-in themes added after that join the list the browser shows. Left out: 0, the first ones.",
+            "type": "integer"
+          },
+          "themes": {
+            "description": "1 to 40 themes. null goes back to the built-in ones.",
+            "oneOf": [
+              {
+                "items": {
+                  "description": "A color scheme on the Appearance screen. Colors are #rrggbb. Anything not given is worked out by static/js/theme.js at readable contrast.",
+                  "properties": {
+                    "accent": {
+                      "description": "The main color: what you can press.",
+                      "type": "string"
+                    },
+                    "background": {
+                      "description": "The page. Left out: the mode's own.",
+                      "type": "string"
+                    },
+                    "button": {
+                      "description": "How the theme's buttons look. A choice left out is the default (rounded, normal, raised, normal).",
+                      "oneOf": [
+                        {
+                          "properties": {
+                            "case": {
+                              "enum": [
+                                "normal",
+                                "upper"
+                              ],
+                              "type": "string"
+                            },
+                            "depth": {
+                              "enum": [
+                                "flat",
+                                "raised",
+                                "glossy"
+                              ],
+                              "type": "string"
+                            },
+                            "shape": {
+                              "enum": [
+                                "square",
+                                "soft",
+                                "rounded",
+                                "pill"
+                              ],
+                              "type": "string"
+                            },
+                            "weight": {
+                              "enum": [
+                                "normal",
+                                "medium",
+                                "bold"
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "dark": {
+                      "description": "A light theme's colors for dark mode, kept while it is light. Switching the theme to dark swaps them in. A light theme's light (or a dark theme's dark) is dropped.",
+                      "oneOf": [
+                        {
+                          "properties": {
+                            "accent": {
+                              "description": "The main color: what you can press.",
+                              "type": "string"
+                            },
+                            "background": {
+                              "description": "The page. Left out: the mode's own.",
+                              "type": "string"
+                            },
+                            "overrides": {
+                              "additionalProperties": {
+                                "type": "string"
+                              },
+                              "description": "Worked-out colors replaced by name: text, accent, accentFg, accentText, second, secondFg, secondText, link, navLink, background, surface, nested, chrome, bar (the bar across the top), barText, info, infoBorder, border, rowOdd and rowEven (alternating table rows), and for each button variant V (Secondary, Success, Danger, Warning, Info, Light, Dark) btnV, btnVFg and btnVText. Leaving one out puts the readable color back.",
+                              "type": "object"
+                            },
+                            "second": {
+                              "description": "Says where you are: active nav item, headings, info.",
+                              "type": "string"
+                            },
+                            "surface": {
+                              "description": "Cards. Left out: the mode's own.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "accent",
+                            "second"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "id": {
+                      "description": "Lower-case letters, digits, - and _, up to 32.",
+                      "type": "string"
+                    },
+                    "light": {
+                      "description": "A dark theme's colors for light mode, kept while it is dark. Switching the theme to light swaps them in.",
+                      "oneOf": [
+                        {
+                          "properties": {
+                            "accent": {
+                              "description": "The main color: what you can press.",
+                              "type": "string"
+                            },
+                            "background": {
+                              "description": "The page. Left out: the mode's own.",
+                              "type": "string"
+                            },
+                            "overrides": {
+                              "additionalProperties": {
+                                "type": "string"
+                              },
+                              "description": "Worked-out colors replaced by name: text, accent, accentFg, accentText, second, secondFg, secondText, link, navLink, background, surface, nested, chrome, bar (the bar across the top), barText, info, infoBorder, border, rowOdd and rowEven (alternating table rows), and for each button variant V (Secondary, Success, Danger, Warning, Info, Light, Dark) btnV, btnVFg and btnVText. Leaving one out puts the readable color back.",
+                              "type": "object"
+                            },
+                            "second": {
+                              "description": "Says where you are: active nav item, headings, info.",
+                              "type": "string"
+                            },
+                            "surface": {
+                              "description": "Cards. Left out: the mode's own.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "accent",
+                            "second"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "mode": {
+                      "enum": [
+                        "light",
+                        "dark"
+                      ],
+                      "type": "string"
+                    },
+                    "name": {
+                      "description": "1 to 60 characters.",
+                      "type": "string"
+                    },
+                    "overrides": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "Worked-out colors replaced by name: text, accent, accentFg, accentText, second, secondFg, secondText, link, navLink, background, surface, nested, chrome, bar (the bar across the top), barText, info, infoBorder, border, rowOdd and rowEven (alternating table rows), and for each button variant V (Secondary, Success, Danger, Warning, Info, Light, Dark) btnV, btnVFg and btnVText. Leaving one out puts the readable color back.",
+                      "type": "object"
+                    },
+                    "second": {
+                      "description": "Says where you are: active nav item, headings, info.",
+                      "type": "string"
+                    },
+                    "surface": {
+                      "description": "Cards. Left out: the mode's own.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "accent",
+                    "id",
+                    "mode",
+                    "name",
+                    "second"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "name": "admin_set_theme_defaults",
+      "route": "POST /api/admin/theme-defaults",
+      "title": "Replace the default themes (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Disable or enable a user (admin)"
+      },
+      "description": "Switch an account off (disabled: true) or back on (false). Disabling signs it out everywhere and voids its live login link; its API keys stop working while it is off. Reversible. The owner and your own account cannot be disabled.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "disabled": {
+            "type": "boolean"
+          },
+          "user_id": {
+            "description": "The account's id, from GET /api/admin/users (admin_list_users over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "disabled",
+          "user_id"
+        ],
+        "type": "object"
+      },
+      "name": "admin_set_user_disabled",
+      "route": "POST /api/admin/users/{user_id}/disabled",
+      "title": "Disable or enable a user (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Disable or enable a user, for many at once (admin)"
+      },
+      "description": "Runs admin_set_user_disabled once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "disabled": {
+                  "type": "boolean"
+                },
+                "user_id": {
+                  "description": "The account's id, from GET /api/admin/users (admin_list_users over MCP).",
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "user_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {
+              "disabled": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "admin_set_user_disabled_bulk",
+      "route": "POST /api/bulk/admin/users/disabled",
+      "title": "Disable or enable a user, for many at once (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Change an account's role (admin)"
+      },
+      "description": "Make an account an admin or an ordinary user. Only the owner takes an admin's rights away; the owner is always an admin, and nobody changes their own role. Becoming an admin ends the account's sessions and live login link.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "role": {
+            "enum": [
+              "admin",
+              "user"
+            ],
+            "type": "string"
+          },
+          "user_id": {
+            "description": "The account's id, from GET /api/admin/users (admin_list_users over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "role",
+          "user_id"
+        ],
+        "type": "object"
+      },
+      "name": "admin_set_user_role",
+      "route": "POST /api/admin/users/{user_id}/role",
+      "title": "Change an account's role (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Change an account's role, for many at once (admin)"
+      },
+      "description": "Runs admin_set_user_role once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "role": {
+                  "enum": [
+                    "admin",
+                    "user"
+                  ],
+                  "type": "string"
+                },
+                "user_id": {
+                  "description": "The account's id, from GET /api/admin/users (admin_list_users over MCP).",
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "user_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {
+              "role": {
+                "enum": [
+                  "admin",
+                  "user"
+                ],
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "admin_set_user_role_bulk",
+      "route": "POST /api/bulk/admin/users/role",
+      "title": "Change an account's role, for many at once (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "Storage for everyone (admin)"
+      },
+      "description": "How many bytes everyone's files use together, and the disk's free and total bytes where the system says.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "name": "admin_storage",
+      "route": "GET /api/admin/storage",
+      "title": "Storage for everyone (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Switch an invite link back on (admin)"
+      },
+      "description": "Undo admin_revoke_invite_link: anyone still holding the link can use it again. The link then counts as this key's: revoking the key switches it off.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "link_id": {
+            "description": "The link's id, from GET /api/admin/invite-links (admin_list_invite_links over MCP).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "link_id"
+        ],
+        "type": "object"
+      },
+      "name": "admin_switch_on_invite_link",
+      "route": "POST /api/admin/invite-links/{link_id}/switch-on",
+      "title": "Switch an invite link back on (admin)"
+    },
+    {
+      "adminOnly": true,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Switch an invite link back on, for many at once (admin)"
+      },
+      "description": "Runs admin_switch_on_invite_link once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "link_id": {
+                  "description": "The link's id, from GET /api/admin/invite-links (admin_list_invite_links over MCP).",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "link_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "admin_switch_on_invite_link_bulk",
+      "route": "POST /api/bulk/admin/invite-links/switch-on",
+      "title": "Switch an invite link back on, for many at once (admin)"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "Whether Smart Photo Extraction is ready for you"
+      },
+      "description": "Whether your photos can be read, whose key they would go on (your own or the server's), and with which model.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ai_status",
+      "route": "GET /api/ai",
+      "title": "Whether Smart Photo Extraction is ready for you"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "Whether your calendar feed is on"
+      },
+      "description": "Whether you have a calendar feed address switched on.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "name": "calendar_feed_status",
+      "route": "GET /api/account/calendar-feed",
+      "title": "Whether your calendar feed is on"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Stop your own login link working"
+      },
+      "description": "Void your account's live login link without making a new one. Devices it already signed in stay signed in. Answers with removed: 0 or 1.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "name": "cancel_my_login_link",
+      "route": "POST /api/account/login-link/cancel",
+      "title": "Stop your own login link working"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Add a code to a container"
+      },
+      "description": "Make another code open this container too: a store-bought QR sticker, a product's barcode, or one of this household's printed codes.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "description": "The scanned value: a QR code's text or a barcode's digits.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "label_id": {
+            "description": "The container's id, from list_labels, search_inventory or scan_code.",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code",
+          "household_id",
+          "label_id"
+        ],
+        "type": "object"
+      },
+      "name": "claim_code",
+      "route": "POST /api/households/{household_id}/labels/{label_id}/codes",
+      "title": "Add a code to a container"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Create a household"
+      },
+      "description": "Make a new shared inventory. You are its first owner.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "create_household",
+      "route": "POST /api/households",
+      "title": "Create a household"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Put items in a container"
+      },
+      "description": "Add up to 100 items to a container at once, each with at least a name. A new item's quantity is 1 unless you say.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "items": {
+            "description": "The items to put in, each with at least a name.",
+            "items": {
+              "properties": {
+                "barcode": {
+                  "maxLength": 200,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "brand": {
+                  "maxLength": 80,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "clear_low_stock": {
+                  "description": "Stop low-stock reminders.",
+                  "type": "boolean"
+                },
+                "clear_remind_days": {
+                  "description": "Use the household's reminder lead again.",
+                  "type": "boolean"
+                },
+                "description": {
+                  "maxLength": 4000,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "expires": {
+                  "description": "Expiry date, YYYY-MM-DD, or empty.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "fields": {
+                  "description": "Custom field values by field id (see the household's fields). Replaces them all.",
+                  "oneOf": [
+                    {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "lent_due": {
+                  "description": "When it should come back, YYYY-MM-DD, or empty.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "lent_to": {
+                  "description": "Who has it on loan; empty when it is back.",
+                  "maxLength": 80,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "low_stock": {
+                  "description": "Remind when the quantity drops to this or below.",
+                  "minimum": 0,
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "name": {
+                  "maxLength": 80,
+                  "minLength": 1,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "photos": {
+                  "description": "File ids of its photos, in order.",
+                  "oneOf": [
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "purchase_date": {
+                  "description": "YYYY-MM-DD, or empty.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "quantity": {
+                  "description": "How many there are. A new item has 1.",
+                  "minimum": 0,
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "receipts": {
+                  "description": "File ids of receipts or warranty papers.",
+                  "oneOf": [
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "remind_days": {
+                  "description": "Days before the expiry to remind, instead of the household's lead.",
+                  "maximum": 365,
+                  "minimum": 0,
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "serial": {
+                  "maxLength": 120,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "tags": {
+                  "description": "Words to find it by. Stored in lower case.",
+                  "oneOf": [
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "unit": {
+                  "description": "pcs, rolls, kg, ...",
+                  "maxLength": 20,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "value": {
+                  "description": "What one is worth, for the insurance list.",
+                  "minimum": 0,
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                }
+              },
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "label_id": {
+            "description": "The container's id, from list_labels, search_inventory or scan_code.",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "household_id",
+          "items",
+          "label_id"
+        ],
+        "type": "object"
+      },
+      "name": "create_items",
+      "route": "POST /api/households/{household_id}/labels/{label_id}/items",
+      "title": "Put items in a container"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Set up a container"
+      },
+      "description": "Make a container: give it a name, and optionally the code on its sticker, a color, where it is, and the container it sits in.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "description": "A printed code that is not on anything yet (from a print run), or any other QR or barcode value to claim, such as a bought sticker. Leave out to make a fresh code.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "color": {
+            "description": "Its label color, #rrggbb, or empty.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "container_type": {
+            "description": "bin, box, drawer, shelf, bag, or anything else.",
+            "maxLength": 40,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "destination": {
+            "description": "For a move: the room it goes to.",
+            "maxLength": 80,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "flags": {
+            "description": "Handling notes printed on its label, such as fragile, this side up, heavy.",
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "location_id": {
+            "description": "Where it sits; 0 for nowhere.",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "move_status": {
+            "description": "For a move: packed, in_transit, unpacked, or empty.",
+            "enum": [
+              "",
+              "packed",
+              "in_transit",
+              "unpacked"
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "maxLength": 4000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parent_id": {
+            "description": "The container it sits inside; 0 for none.",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "photos": {
+            "description": "File ids of its photos, in order (see attach_photo).",
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "household_id"
+        ],
+        "type": "object"
+      },
+      "name": "create_label",
+      "route": "POST /api/households/{household_id}/labels",
+      "title": "Set up a container"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Add a location"
+      },
+      "description": "Add a place containers can sit, optionally inside another (Garage inside House).",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "parent_id": {
+            "description": "The location it is inside; leave out for a top-level one.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "household_id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "create_location",
+      "route": "POST /api/households/{household_id}/locations",
+      "title": "Add a location"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "A login link for yourself"
+      },
+      "description": "A link that signs your own account in on a browser or another device. An API key may ask only if your account let it, from a browser session (POST /api/keys/{key_id}/sign-in); its link works once, for at most 15 minutes. Only works if this key was allowed to make sign-in links, on the API keys card. Answers with login_url (open it to sign in; it works once, for at most 15 minutes), expires_at and max_uses. Any older link the account could still use stops working; its signed-in devices stay signed in. Revoking or deleting this API key voids the link while it is unused, and signs out every device it signed in.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "expires_in_minutes": {
+            "description": "0 never expires. Default auth.login_token_ttl_seconds for a link that works once, auth.multi_use_login_token_ttl_seconds otherwise.",
+            "maximum": 525600,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "max_uses": {
+            "description": "Sign-ins the link allows: 1-1000, or 0 for unlimited. Default 1.",
+            "maximum": 1000,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "name": "create_my_login_link",
+      "route": "POST /api/account/login-link",
+      "title": "A login link for yourself"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Make codes to print"
+      },
+      "description": "Mint 1-300 brand-new codes for printing. Each one, once stuck on something and scanned, offers to set up that container.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "description": "How many labels.",
+            "maximum": 300,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "layout": {
+            "description": "Which sheet it is printed on, as the Print screen names it.",
+            "maxLength": 40,
+            "type": "string"
+          },
+          "names": {
+            "description": "Names to print under the codes, in order (optional).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "palette": {
+            "description": "original, neon, modern, or a single #rrggbb.",
+            "maxLength": 40,
+            "type": "string"
+          }
+        },
+        "required": [
+          "count",
+          "household_id"
+        ],
+        "type": "object"
+      },
+      "name": "create_sheet",
+      "route": "POST /api/households/{household_id}/sheets",
+      "title": "Make codes to print"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Delete a household"
+      },
+      "description": "Delete a household and everything in it, for good: its locations, containers, codes, print runs and items. Owners only. Photos stay in their uploaders' Files.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "household_id"
+        ],
+        "type": "object"
+      },
+      "name": "delete_household",
+      "route": "POST /api/households/{household_id}/delete",
+      "title": "Delete a household"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Delete an item"
+      },
+      "description": "Put an item in Trash; restore_item brings it back until it is purged.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "item_id": {
+            "description": "The item's id, from list_items, search_inventory or get_label.",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "household_id",
+          "item_id"
+        ],
+        "type": "object"
+      },
+      "name": "delete_item",
+      "route": "POST /api/households/{household_id}/items/{item_id}/delete",
+      "title": "Delete an item"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Delete an item, for many at once"
+      },
+      "description": "Runs delete_item once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "household_id": {
+                  "description": "The household's id, from GET /api/households (list_households over MCP).",
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "item_id": {
+                  "description": "The item's id, from list_items, search_inventory or get_label.",
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "household_id",
+                "item_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "delete_item_bulk",
+      "route": "POST /api/bulk/households/items/delete",
+      "title": "Delete an item, for many at once"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Delete a container"
+      },
+      "description": "Put a container and the items in it in Trash. restore_label brings both back. Its codes keep pointing at it until it is purged.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "label_id": {
+            "description": "The container's id, from list_labels, search_inventory or scan_code.",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "household_id",
+          "label_id"
+        ],
+        "type": "object"
+      },
+      "name": "delete_label",
+      "route": "POST /api/households/{household_id}/labels/{label_id}/delete",
+      "title": "Delete a container"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Delete a container, for many at once"
+      },
+      "description": "Runs delete_label once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "household_id": {
+                  "description": "The household's id, from GET /api/households (list_households over MCP).",
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "label_id": {
+                  "description": "The container's id, from list_labels, search_inventory or scan_code.",
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "household_id",
+                "label_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "delete_label_bulk",
+      "route": "POST /api/bulk/households/labels/delete",
+      "title": "Delete a container, for many at once"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Delete a location"
+      },
+      "description": "Put a location in Trash. Containers there keep it until it is purged, and show no location meanwhile; restore_location puts it back.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "location_id": {
+            "description": "The location's id, from list_locations.",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "household_id",
+          "location_id"
+        ],
+        "type": "object"
+      },
+      "name": "delete_location",
+      "route": "POST /api/households/{household_id}/locations/{location_id}/delete",
+      "title": "Delete a location"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Delete a location, for many at once"
+      },
+      "description": "Runs delete_location once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "household_id": {
+                  "description": "The household's id, from GET /api/households (list_households over MCP).",
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "location_id": {
+                  "description": "The location's id, from list_locations.",
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "household_id",
+                "location_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "delete_location_bulk",
+      "route": "POST /api/bulk/households/locations/delete",
+      "title": "Delete a location, for many at once"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Forget a print run"
+      },
+      "description": "Forget a print run. Its codes already on containers keep working; the rest stop, so stickers thrown away cannot be scanned later.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "sheet_id": {
+            "description": "The print run's id, from list_sheets.",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "household_id",
+          "sheet_id"
+        ],
+        "type": "object"
+      },
+      "name": "delete_sheet",
+      "route": "POST /api/households/{household_id}/sheets/{sheet_id}/delete",
+      "title": "Forget a print run"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Read a photo of a container's contents"
+      },
+      "description": "Ask Claude to list the items in an uploaded top-down photo, with your own API key if you set one, else the server's if an admin lets you. Answers at once with a draft whose status is working; ask get_extraction until it is ready, then accept_extraction with the items that are right.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file_id": {
+            "description": "The photo, already uploaded (files_start_upload): JPEG, PNG, WebP or GIF, taken from above.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "label_id": {
+            "description": "The container's id, from list_labels, search_inventory or scan_code.",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "file_id",
+          "household_id",
+          "label_id"
+        ],
+        "type": "object"
+      },
+      "name": "extract_photo",
+      "route": "POST /api/households/{household_id}/labels/{label_id}/extract",
+      "title": "Read a photo of a container's contents"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Delete a file"
+      },
+      "description": "Move one of your files to the bin. It can be restored for ten minutes; after that it is gone. files_restore brings it back.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file_id": {
+            "description": "The file's id, from GET /api/files (files_list over MCP).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file_id"
+        ],
+        "type": "object"
+      },
+      "name": "files_delete",
+      "route": "POST /api/files/{file_id}/delete",
+      "title": "Delete a file"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Delete a file, for many at once"
+      },
+      "description": "Runs files_delete once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "file_id": {
+                  "description": "The file's id, from GET /api/files (files_list over MCP).",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "file_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "files_delete_bulk",
+      "route": "POST /api/bulk/files/delete",
+      "title": "Delete a file, for many at once"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "Where to download a file"
+      },
+      "description": "The address of one of your files. GET it over HTTP with the same Authorization: Bearer header this MCP connection uses; the bytes do not come through MCP.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file_id": {
+            "description": "The file's id, from GET /api/files (files_list over MCP).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file_id"
+        ],
+        "type": "object"
+      },
+      "name": "files_download_url",
+      "route": "GET /api/files/{file_id}/download",
+      "title": "Where to download a file"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Finish an upload"
+      },
+      "description": "Seal an upload once every piece has arrived; the file is then ready to download. Asked again, it answers the same. If pieces are missing it says how many arrived (received).",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file_id": {
+            "description": "The file's id, from GET /api/files (files_list over MCP).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file_id"
+        ],
+        "type": "object"
+      },
+      "name": "files_finish_upload",
+      "route": "POST /api/files/{file_id}/finish",
+      "title": "Finish an upload"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "One of your files"
+      },
+      "description": "One file: its details, and for an unfinished upload how many pieces have arrived (received), which is where to resume.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file_id": {
+            "description": "The file's id, from GET /api/files (files_list over MCP).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file_id"
+        ],
+        "type": "object"
+      },
+      "name": "files_get",
+      "route": "GET /api/files/{file_id}",
+      "title": "One of your files"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "List your files"
+      },
+      "description": "Your uploaded files, a page at a time: id, name, type, size, state (uploading or ready) and when. next is the offset of the following page, or null on the last one.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "dir": {
+            "description": "Default asc.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string"
+          },
+          "limit": {
+            "default": 200,
+            "description": "Rows to return. Default 200.",
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "offset": {
+            "description": "Rows to skip: the next value of the previous page.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "q": {
+            "description": "Keep files whose name contains this, in any case.",
+            "type": "string"
+          },
+          "sort": {
+            "description": "Field to sort the whole list by. Rows without it go last.",
+            "enum": [
+              "name",
+              "size",
+              "created_at"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "files_list",
+      "route": "GET /api/files",
+      "title": "List your files"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Rename a file"
+      },
+      "description": "Give one of your files a new name. expect, when given, is the name you think it has now; a rename made meanwhile is refused with the current name.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "expect": {
+            "description": "The name you think it has. Answers 409 if it has another.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "file_id": {
+            "description": "The file's id, from GET /api/files (files_list over MCP).",
+            "type": "string"
+          },
+          "name": {
+            "description": "Cleaned like an upload's name. 1-255 bytes.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file_id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "files_rename",
+      "route": "POST /api/files/{file_id}/rename",
+      "title": "Rename a file"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Restore a deleted file"
+      },
+      "description": "Bring back a file you deleted, while it is still in the bin and your storage quota has room.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file_id": {
+            "description": "The file's id, from GET /api/files (files_list over MCP).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file_id"
+        ],
+        "type": "object"
+      },
+      "name": "files_restore",
+      "route": "POST /api/files/{file_id}/restore",
+      "title": "Restore a deleted file"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Restore a deleted file, for many at once"
+      },
+      "description": "Runs files_restore once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "file_id": {
+                  "description": "The file's id, from GET /api/files (files_list over MCP).",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "file_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "files_restore_bulk",
+      "route": "POST /api/bulk/files/restore",
+      "title": "Restore a deleted file, for many at once"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Start uploading a file"
+      },
+      "description": "Reserve room for a file and get where to send it. The bytes do not go through MCP: POST each piece of chunk_bytes bytes (the last may be shorter), in order from index 0, as the raw body (Content-Type: application/octet-stream) to chunk_url with {index} filled in and the same Authorization: Bearer header this MCP connection uses. curl is a shell recipe that does all of it. Then call files_finish_upload.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "size": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": {
+            "description": "Shown in the list. Downloads are always application/octet-stream.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "size"
+        ],
+        "type": "object"
+      },
+      "name": "files_start_upload",
+      "route": "POST /api/files",
+      "title": "Start uploading a file"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "A photo draft"
+      },
+      "description": "What Claude found in a photo so far: status working, then ready (with items) or failed (with error).",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "extraction_id": {
+            "description": "The draft's id, from extract_photo.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "extraction_id",
+          "household_id"
+        ],
+        "type": "object"
+      },
+      "name": "get_extraction",
+      "route": "GET /api/households/{household_id}/extractions/{extraction_id}",
+      "title": "A photo draft"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "One household"
+      },
+      "description": "A household you are in: your role, its members, color meanings and custom fields.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "household_id"
+        ],
+        "type": "object"
+      },
+      "name": "get_household",
+      "route": "GET /api/households/{household_id}",
+      "title": "One household"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "One item"
+      },
+      "description": "An item with everything known about it, where it is, and its history.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "item_id": {
+            "description": "The item's id, from list_items, search_inventory or get_label.",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "household_id",
+          "item_id"
+        ],
+        "type": "object"
+      },
+      "name": "get_item",
+      "route": "GET /api/households/{household_id}/items/{item_id}",
+      "title": "One item"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "One container and what is in it"
+      },
+      "description": "A container with its items and the containers inside it.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "label_id": {
+            "description": "The container's id, from list_labels, search_inventory or scan_code.",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "household_id",
+          "label_id"
+        ],
+        "type": "object"
+      },
+      "name": "get_label",
+      "route": "GET /api/households/{household_id}/labels/{label_id}",
+      "title": "One container and what is in it"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Add items from a spreadsheet"
+      },
+      "description": "Add every row of an uploaded CSV as an item. A header row names the columns (Item, Quantity, Container, Location, Tags, Expires, Value ... as in an export, and the usual names other apps use). Containers and locations it does not know are made; nothing is changed or removed.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file_id": {
+            "description": "A CSV file you uploaded (files_start_upload), with a header row.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "file_id",
+          "household_id"
+        ],
+        "type": "object"
+      },
+      "name": "import_csv",
+      "route": "POST /api/households/{household_id}/import",
+      "title": "Add items from a spreadsheet"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Name one of your devices"
+      },
+      "description": "Give one of your devices a name (at most 80 characters; empty clears it). expect, when given, is the name you think it has now.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "expect": {
+            "description": "The name you think it has. Answers 409 if it has another.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "label": {
+            "description": "At most 80 characters.",
+            "maxLength": 80,
+            "type": "string"
+          },
+          "session_id": {
+            "description": "The device's id, from GET /api/account/sessions or GET /api/admin/users/{user_id}/sessions (list_my_sessions or admin_list_user_sessions over MCP).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "session_id"
+        ],
+        "type": "object"
+      },
+      "name": "label_my_session",
+      "route": "POST /api/account/sessions/{session_id}/label",
+      "title": "Name one of your devices"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Leave a household"
+      },
+      "description": "Stop being a member. The last owner cannot leave: make someone else an owner, or delete the household.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "household_id"
+        ],
+        "type": "object"
+      },
+      "name": "leave_household",
+      "route": "POST /api/households/{household_id}/leave",
+      "title": "Leave a household"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "List your households"
+      },
+      "description": "The households you are a member of, each with your role, its members, color meanings and custom fields. Every other inventory tool takes one of these ids.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "default": 200,
+            "description": "Rows to return. Default 200.",
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "offset": {
+            "description": "Rows to skip: the next value of the previous page.",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "list_households",
+      "route": "GET /api/households",
+      "title": "List your households"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "List and search items"
+      },
+      "description": "Items in a household, each with the container it is in and where that is. Search by words (a typo is forgiven) and narrow by container, location, tag, color, expiry, low stock or loans.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "color": {
+            "description": "Only items in containers of this label color.",
+            "type": "string"
+          },
+          "dir": {
+            "description": "Default asc.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string"
+          },
+          "expiring_within": {
+            "description": "Only items expiring within this many days (or already expired).",
+            "maximum": 3650,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "label_id": {
+            "description": "Only items in this container or the containers inside it.",
+            "type": "integer"
+          },
+          "lent": {
+            "description": "Only items lent out.",
+            "type": "boolean"
+          },
+          "limit": {
+            "default": 200,
+            "description": "Rows to return. Default 200.",
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "location_id": {
+            "description": "Only items at this location or anywhere inside it.",
+            "type": "integer"
+          },
+          "low_stock": {
+            "description": "Only items at or below their low-stock level.",
+            "type": "boolean"
+          },
+          "offset": {
+            "description": "Rows to skip: the next value of the previous page.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "q": {
+            "description": "Words to find: in names, descriptions, tags, brands, barcodes, serials, custom fields, and where it is. Forgives a typo.",
+            "type": "string"
+          },
+          "sort": {
+            "description": "Field to sort by.",
+            "enum": [
+              "name",
+              "path",
+              "quantity",
+              "expires",
+              "value",
+              "updated_at",
+              "created_at"
+            ],
+            "type": "string"
+          },
+          "tag": {
+            "description": "Only items with this tag.",
+            "type": "string"
+          },
+          "trash": {
+            "description": "List the ones in Trash instead.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "household_id"
+        ],
+        "type": "object"
+      },
+      "name": "list_items",
+      "route": "GET /api/households/{household_id}/items",
+      "title": "List and search items"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "List containers"
+      },
+      "description": "Containers in a household, each with its code, where it is, how many items it holds and what they are worth. Narrow by words, location, outer container, color or moving state.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "color": {
+            "description": "Only this label color, #rrggbb.",
+            "type": "string"
+          },
+          "dir": {
+            "description": "Default asc.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string"
+          },
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "limit": {
+            "default": 200,
+            "description": "Rows to return. Default 200.",
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "location_id": {
+            "description": "Only containers at this location or inside it.",
+            "type": "integer"
+          },
+          "move_status": {
+            "description": "Only containers in this moving state.",
+            "enum": [
+              "packed",
+              "in_transit",
+              "unpacked"
+            ],
+            "type": "string"
+          },
+          "offset": {
+            "description": "Rows to skip: the next value of the previous page.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "parent_id": {
+            "description": "Only containers sitting directly inside this one.",
+            "type": "integer"
+          },
+          "q": {
+            "description": "Keep containers whose name, code, notes or place has these words.",
+            "type": "string"
+          },
+          "sort": {
+            "description": "Field to sort by.",
+            "enum": [
+              "name",
+              "path",
+              "item_count",
+              "value",
+              "updated_at",
+              "created_at"
+            ],
+            "type": "string"
+          },
+          "trash": {
+            "description": "List the ones in Trash instead.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "household_id"
+        ],
+        "type": "object"
+      },
+      "name": "list_labels",
+      "route": "GET /api/households/{household_id}/labels",
+      "title": "List containers"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "List locations"
+      },
+      "description": "The places containers sit, such as House › Garage › Shelf 2, each with its full path, in path order.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "limit": {
+            "default": 200,
+            "description": "Rows to return. Default 200.",
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "offset": {
+            "description": "Rows to skip: the next value of the previous page.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "trash": {
+            "description": "List the ones in Trash instead.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "household_id"
+        ],
+        "type": "object"
+      },
+      "name": "list_locations",
+      "route": "GET /api/households/{household_id}/locations",
+      "title": "List locations"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "Your signed-in devices"
+      },
+      "description": "Where your account is signed in, a page at a time: id, when it started and was last seen, the browser, and the name you gave it. Through an API key no device is current. next is the offset of the following page, or null on the last one.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "default": 200,
+            "description": "Rows to return. Default 200.",
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "offset": {
+            "description": "Rows to skip: the next value of the previous page.",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "list_my_sessions",
+      "route": "GET /api/account/sessions",
+      "title": "Your signed-in devices"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "Your reminders"
+      },
+      "description": "Reminders about items in your households, newest first: expiring or expired, run low, or overdue back from a loan.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "default": 200,
+            "description": "Rows to return. Default 200.",
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "offset": {
+            "description": "Rows to skip: the next value of the previous page.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "unread": {
+            "description": "Only the ones not read yet.",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "name": "list_notifications",
+      "route": "GET /api/notifications",
+      "title": "Your reminders"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "List print runs"
+      },
+      "description": "Sheets of codes made for printing, newest first, with how many are on containers.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "limit": {
+            "default": 200,
+            "description": "Rows to return. Default 200.",
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "offset": {
+            "description": "Rows to skip: the next value of the previous page.",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "household_id"
+        ],
+        "type": "object"
+      },
+      "name": "list_sheets",
+      "route": "GET /api/households/{household_id}/sheets",
+      "title": "List print runs"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "List team"
+      },
+      "description": "People with an active account, a page at a time: id and display name. Use the id wherever another tool asks for a user. next is the offset of the following page, or null on the last one.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "default": 200,
+            "description": "Rows to return. Default 200.",
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "offset": {
+            "description": "Rows to skip: the next value of the previous page.",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "list_team",
+      "route": "GET /api/team",
+      "title": "List team"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Mark reminders read"
+      },
+      "description": "Mark one reminder read, or all of them.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "notification_id": {
+            "description": "The one to mark read; leave out to mark them all.",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "mark_notifications_read",
+      "route": "POST /api/notifications/read",
+      "title": "Mark reminders read"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Move everything to another container"
+      },
+      "description": "Move every item in this container into another one in the same household, in one go.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "label_id": {
+            "description": "The container's id, from list_labels, search_inventory or scan_code.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "to_label_id": {
+            "description": "The container everything goes into.",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "household_id",
+          "label_id",
+          "to_label_id"
+        ],
+        "type": "object"
+      },
+      "name": "move_contents",
+      "route": "POST /api/households/{household_id}/labels/{label_id}/move-contents",
+      "title": "Move everything to another container"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Move an item to another container"
+      },
+      "description": "Put an item in another container of the same household.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "item_id": {
+            "description": "The item's id, from list_items, search_inventory or get_label.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "label_id": {
+            "description": "The container it goes into.",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "household_id",
+          "item_id",
+          "label_id"
+        ],
+        "type": "object"
+      },
+      "name": "move_item",
+      "route": "POST /api/households/{household_id}/items/{item_id}/move",
+      "title": "Move an item to another container"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Move an item to another container, for many at once"
+      },
+      "description": "Runs move_item once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "household_id": {
+                  "description": "The household's id, from GET /api/households (list_households over MCP).",
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "item_id": {
+                  "description": "The item's id, from list_items, search_inventory or get_label.",
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "label_id": {
+                  "description": "The container it goes into.",
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "household_id",
+                "item_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {
+              "label_id": {
+                "description": "The container it goes into.",
+                "minimum": 1,
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "move_item_bulk",
+      "route": "POST /api/bulk/households/items/move",
+      "title": "Move an item to another container, for many at once"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "Your photo-reading settings"
+      },
+      "description": "Whether you have your own Anthropic key (never the key itself), the model and effort you picked, whether you may use the server's key, and whose key your photos would go on now.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "name": "my_ai_settings",
+      "route": "GET /api/account/ai",
+      "title": "Your photo-reading settings"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "Your storage"
+      },
+      "description": "How many bytes your files use, and your quota (0 is no limit).",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "name": "my_storage",
+      "route": "GET /api/account/storage",
+      "title": "Your storage"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Take a code off a container"
+      },
+      "description": "Stop an added code opening this container. Its own code cannot be taken off.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "description": "The scanned value: a QR code's text or a barcode's digits.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "label_id": {
+            "description": "The container's id, from list_labels, search_inventory or scan_code.",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code",
+          "household_id",
+          "label_id"
+        ],
+        "type": "object"
+      },
+      "name": "release_code",
+      "route": "POST /api/households/{household_id}/labels/{label_id}/codes/release",
+      "title": "Take a code off a container"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Rename your account"
+      },
+      "description": "Change your own display name (1-80 characters). expect, when given, is the name you think it has now; if someone changed it meanwhile the rename is refused with the current name, so nothing is overwritten unseen.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "display_name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "expect": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "display_name"
+        ],
+        "type": "object"
+      },
+      "name": "rename_account",
+      "route": "POST /api/account/rename",
+      "title": "Rename your account"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Rename a household"
+      },
+      "description": "Give a household a new name. Owners and editors.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "household_id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "rename_household",
+      "route": "POST /api/households/{household_id}/rename",
+      "title": "Rename a household"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "Codes to print again"
+      },
+      "description": "The codes, names, colors and handling flags of containers you already have, to print replacement labels.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "label_ids": {
+            "description": "Containers whose own labels to print again.",
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 300,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "household_id",
+          "label_ids"
+        ],
+        "type": "object"
+      },
+      "name": "reprint_labels",
+      "route": "POST /api/households/{household_id}/labels/reprint",
+      "title": "Codes to print again"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Restore an item"
+      },
+      "description": "Take an item back out of Trash. Its container has to be out of Trash first.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "item_id": {
+            "description": "The item's id, from list_items, search_inventory or get_label.",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "household_id",
+          "item_id"
+        ],
+        "type": "object"
+      },
+      "name": "restore_item",
+      "route": "POST /api/households/{household_id}/items/{item_id}/restore",
+      "title": "Restore an item"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Restore an item, for many at once"
+      },
+      "description": "Runs restore_item once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "household_id": {
+                  "description": "The household's id, from GET /api/households (list_households over MCP).",
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "item_id": {
+                  "description": "The item's id, from list_items, search_inventory or get_label.",
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "household_id",
+                "item_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "restore_item_bulk",
+      "route": "POST /api/bulk/households/items/restore",
+      "title": "Restore an item, for many at once"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Restore a container"
+      },
+      "description": "Take a container back out of Trash, with the items that were deleted along with it.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "label_id": {
+            "description": "The container's id, from list_labels, search_inventory or scan_code.",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "household_id",
+          "label_id"
+        ],
+        "type": "object"
+      },
+      "name": "restore_label",
+      "route": "POST /api/households/{household_id}/labels/{label_id}/restore",
+      "title": "Restore a container"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Restore a container, for many at once"
+      },
+      "description": "Runs restore_label once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "household_id": {
+                  "description": "The household's id, from GET /api/households (list_households over MCP).",
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "label_id": {
+                  "description": "The container's id, from list_labels, search_inventory or scan_code.",
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "household_id",
+                "label_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "restore_label_bulk",
+      "route": "POST /api/bulk/households/labels/restore",
+      "title": "Restore a container, for many at once"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Restore a location"
+      },
+      "description": "Take a location back out of Trash.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "location_id": {
+            "description": "The location's id, from list_locations.",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "household_id",
+          "location_id"
+        ],
+        "type": "object"
+      },
+      "name": "restore_location",
+      "route": "POST /api/households/{household_id}/locations/{location_id}/restore",
+      "title": "Restore a location"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Restore a location, for many at once"
+      },
+      "description": "Runs restore_location once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "household_id": {
+                  "description": "The household's id, from GET /api/households (list_households over MCP).",
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "location_id": {
+                  "description": "The location's id, from list_locations.",
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "household_id",
+                "location_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "restore_location_bulk",
+      "route": "POST /api/bulk/households/locations/restore",
+      "title": "Restore a location, for many at once"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Sign out all your devices"
+      },
+      "description": "End every session your account has: through an API key there is no current device to keep, so every browser signs in again. API keys keep working. Answers with how many were removed.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "name": "revoke_my_other_sessions",
+      "route": "POST /api/account/sessions/revoke-others",
+      "title": "Sign out all your devices"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Sign out one of your devices"
+      },
+      "description": "End one of your signed-in sessions; that browser has to sign in again.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "session_id": {
+            "description": "The device's id, from GET /api/account/sessions or GET /api/admin/users/{user_id}/sessions (list_my_sessions or admin_list_user_sessions over MCP).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id"
+        ],
+        "type": "object"
+      },
+      "name": "revoke_my_session",
+      "route": "POST /api/account/sessions/{session_id}/revoke",
+      "title": "Sign out one of your devices"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Sign out one of your devices, for many at once"
+      },
+      "description": "Runs revoke_my_session once per item: items holds each call's arguments, shared the arguments they have in common (an item's own win). In order; one failing does not stop the rest, and the reply says how each went. At most 100 items.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "One entry per thing to change: its id, and any field that differs from shared.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "session_id": {
+                  "description": "The device's id, from GET /api/account/sessions or GET /api/admin/users/{user_id}/sessions (list_my_sessions or admin_list_user_sessions over MCP).",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "session_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "shared": {
+            "additionalProperties": false,
+            "description": "Fields every item gets, unless the item sets its own.",
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "revoke_my_session_bulk",
+      "route": "POST /api/bulk/account/sessions/revoke",
+      "title": "Sign out one of your devices, for many at once"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "Look up a scanned code"
+      },
+      "description": "What a scanned or typed code is: one of your containers (with where it is), one of your household's printed codes still waiting to be stuck on something (set it up with create_label and this code), or unknown -- which may be a store-bought sticker or barcode you can claim for a container with claim_code.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "description": "What the camera read: a printed code (XXXXX-XXXXX, with or without the dash), a link ending /l/<code>, any other QR text, or a barcode's digits.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "scan_code",
+      "route": "GET /api/scan",
+      "title": "Look up a scanned code"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "Find where something is"
+      },
+      "description": "Search every household you are in for items and containers, and say where each one is. The question \"where is my drill?\" is search_inventory with q=drill.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "default": 200,
+            "description": "Rows to return. Default 200.",
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "offset": {
+            "description": "Rows to skip: the next value of the previous page.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "q": {
+            "description": "What you are looking for, such as \"drill\" or \"christmas lights\". A typo is forgiven.",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "search_inventory",
+      "route": "GET /api/search",
+      "title": "Find where something is"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Say what label colors mean"
+      },
+      "description": "Replace the household's color legend: which room or kind of thing each label color stands for. Owners and editors.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "colors": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Label color (#rrggbb) to what it means here, such as \"#d32f2f\": \"Kitchen\". Replaces the whole list.",
+            "type": "object"
+          },
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "colors",
+          "household_id"
+        ],
+        "type": "object"
+      },
+      "name": "set_household_colors",
+      "route": "POST /api/households/{household_id}/colors",
+      "title": "Say what label colors mean"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Set custom fields and reminder lead"
+      },
+      "description": "Replace the custom fields items here can fill in (serial numbers, warranty dates, anything), and how many days before an expiry reminders go out. Owners and editors.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "fields": {
+            "description": "The whole list. Each has a name, a type (text, number, date, select or bool), options for a select, and the id it already has, if any, so values survive a rename.",
+            "items": {
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "options": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "type"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "reminder_days": {
+            "description": "Days before an expiry its reminder goes out, 0-365; null uses the app's default.",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "fields",
+          "household_id",
+          "reminder_days"
+        ],
+        "type": "object"
+      },
+      "name": "set_household_fields",
+      "route": "POST /api/households/{household_id}/fields",
+      "title": "Set custom fields and reminder lead"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Add, change or remove a member"
+      },
+      "description": "Give someone with an account a role here -- owner (everything), editor (change the inventory) or viewer (look only) -- or an empty role to take them out. Owners only. A household always keeps at least one owner.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "role": {
+            "description": "owner, editor or viewer; empty takes them out.",
+            "enum": [
+              "owner",
+              "editor",
+              "viewer",
+              ""
+            ],
+            "type": "string"
+          },
+          "user_id": {
+            "description": "Their account id, from GET /api/team (list_team over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "household_id",
+          "role",
+          "user_id"
+        ],
+        "type": "object"
+      },
+      "name": "set_household_member",
+      "route": "POST /api/households/{household_id}/members",
+      "title": "Add, change or remove a member"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Change your keyboard shortcuts"
+      },
+      "description": "Replace your changed keyboard shortcuts: action name to binding, such as \"search\": \"Mod+K\" (Mod is Cmd on a Mac, Ctrl elsewhere). Send the whole set; an empty binding switches a key off, and {} puts every key back to its default. whoami shows the current set.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "shortcuts": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Action name to binding, such as \"search\": \"Mod+K\". Mod is Cmd on a Mac and Ctrl elsewhere. Only changed shortcuts are listed; an empty binding switches that key off. Replaces the whole set; {} puts every key back to its default.",
+            "type": "object"
+          }
+        },
+        "required": [
+          "shortcuts"
+        ],
+        "type": "object"
+      },
+      "name": "set_shortcuts",
+      "route": "POST /api/account/shortcuts",
+      "title": "Change your keyboard shortcuts"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Pick your theme"
+      },
+      "description": "Switch to another theme from your list (or the defaults), by its id.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "theme_id": {
+            "description": "A theme's id. Empty for the first in the list.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "theme_id"
+        ],
+        "type": "object"
+      },
+      "name": "set_theme",
+      "route": "POST /api/account/theme",
+      "title": "Pick your theme"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Replace your own themes"
+      },
+      "description": "Replace your whole list of color themes (1 to 40) and pick the one you use. themes: null goes back to following the app's defaults. A theme is the Theme schema in the API reference (config/api.json): id, name, mode light|dark, accent, second, and optional colors as #rrggbb. whoami shows the current list.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "builtins": {
+            "description": "Which built-in themes this list has seen: the highest since in Theme.builtIn (static/js/theme.js) when it was saved. Built-in themes added after that join the list the browser shows. Left out: 0, the first ones.",
+            "type": "integer"
+          },
+          "theme_id": {
+            "description": "The theme you use.",
+            "type": "string"
+          },
+          "themes": {
+            "description": "Your whole list, 1 to 40 themes. null goes back to following the app's defaults.",
+            "oneOf": [
+              {
+                "items": {
+                  "description": "A color scheme on the Appearance screen. Colors are #rrggbb. Anything not given is worked out by static/js/theme.js at readable contrast.",
+                  "properties": {
+                    "accent": {
+                      "description": "The main color: what you can press.",
+                      "type": "string"
+                    },
+                    "background": {
+                      "description": "The page. Left out: the mode's own.",
+                      "type": "string"
+                    },
+                    "button": {
+                      "description": "How the theme's buttons look. A choice left out is the default (rounded, normal, raised, normal).",
+                      "oneOf": [
+                        {
+                          "properties": {
+                            "case": {
+                              "enum": [
+                                "normal",
+                                "upper"
+                              ],
+                              "type": "string"
+                            },
+                            "depth": {
+                              "enum": [
+                                "flat",
+                                "raised",
+                                "glossy"
+                              ],
+                              "type": "string"
+                            },
+                            "shape": {
+                              "enum": [
+                                "square",
+                                "soft",
+                                "rounded",
+                                "pill"
+                              ],
+                              "type": "string"
+                            },
+                            "weight": {
+                              "enum": [
+                                "normal",
+                                "medium",
+                                "bold"
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "dark": {
+                      "description": "A light theme's colors for dark mode, kept while it is light. Switching the theme to dark swaps them in. A light theme's light (or a dark theme's dark) is dropped.",
+                      "oneOf": [
+                        {
+                          "properties": {
+                            "accent": {
+                              "description": "The main color: what you can press.",
+                              "type": "string"
+                            },
+                            "background": {
+                              "description": "The page. Left out: the mode's own.",
+                              "type": "string"
+                            },
+                            "overrides": {
+                              "additionalProperties": {
+                                "type": "string"
+                              },
+                              "description": "Worked-out colors replaced by name: text, accent, accentFg, accentText, second, secondFg, secondText, link, navLink, background, surface, nested, chrome, bar (the bar across the top), barText, info, infoBorder, border, rowOdd and rowEven (alternating table rows), and for each button variant V (Secondary, Success, Danger, Warning, Info, Light, Dark) btnV, btnVFg and btnVText. Leaving one out puts the readable color back.",
+                              "type": "object"
+                            },
+                            "second": {
+                              "description": "Says where you are: active nav item, headings, info.",
+                              "type": "string"
+                            },
+                            "surface": {
+                              "description": "Cards. Left out: the mode's own.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "accent",
+                            "second"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "id": {
+                      "description": "Lower-case letters, digits, - and _, up to 32.",
+                      "type": "string"
+                    },
+                    "light": {
+                      "description": "A dark theme's colors for light mode, kept while it is dark. Switching the theme to light swaps them in.",
+                      "oneOf": [
+                        {
+                          "properties": {
+                            "accent": {
+                              "description": "The main color: what you can press.",
+                              "type": "string"
+                            },
+                            "background": {
+                              "description": "The page. Left out: the mode's own.",
+                              "type": "string"
+                            },
+                            "overrides": {
+                              "additionalProperties": {
+                                "type": "string"
+                              },
+                              "description": "Worked-out colors replaced by name: text, accent, accentFg, accentText, second, secondFg, secondText, link, navLink, background, surface, nested, chrome, bar (the bar across the top), barText, info, infoBorder, border, rowOdd and rowEven (alternating table rows), and for each button variant V (Secondary, Success, Danger, Warning, Info, Light, Dark) btnV, btnVFg and btnVText. Leaving one out puts the readable color back.",
+                              "type": "object"
+                            },
+                            "second": {
+                              "description": "Says where you are: active nav item, headings, info.",
+                              "type": "string"
+                            },
+                            "surface": {
+                              "description": "Cards. Left out: the mode's own.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "accent",
+                            "second"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "mode": {
+                      "enum": [
+                        "light",
+                        "dark"
+                      ],
+                      "type": "string"
+                    },
+                    "name": {
+                      "description": "1 to 60 characters.",
+                      "type": "string"
+                    },
+                    "overrides": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "Worked-out colors replaced by name: text, accent, accentFg, accentText, second, secondFg, secondText, link, navLink, background, surface, nested, chrome, bar (the bar across the top), barText, info, infoBorder, border, rowOdd and rowEven (alternating table rows), and for each button variant V (Secondary, Success, Danger, Warning, Info, Light, Dark) btnV, btnVFg and btnVText. Leaving one out puts the readable color back.",
+                      "type": "object"
+                    },
+                    "second": {
+                      "description": "Says where you are: active nav item, headings, info.",
+                      "type": "string"
+                    },
+                    "surface": {
+                      "description": "Cards. Left out: the mode's own.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "accent",
+                    "id",
+                    "mode",
+                    "name",
+                    "second"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "name": "set_themes",
+      "route": "POST /api/account/themes",
+      "title": "Replace your own themes"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Change an item"
+      },
+      "description": "Change anything about an item: name, photos, tags, quantity, low-stock level, expiry, custom fields, value, receipts, who it is lent to. Only what you send changes.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "barcode": {
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "brand": {
+            "maxLength": 80,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "clear_low_stock": {
+            "description": "Stop low-stock reminders.",
+            "type": "boolean"
+          },
+          "clear_remind_days": {
+            "description": "Use the household's reminder lead again.",
+            "type": "boolean"
+          },
+          "description": {
+            "maxLength": 4000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expires": {
+            "description": "Expiry date, YYYY-MM-DD, or empty.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fields": {
+            "description": "Custom field values by field id (see the household's fields). Replaces them all.",
+            "oneOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "item_id": {
+            "description": "The item's id, from list_items, search_inventory or get_label.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "lent_due": {
+            "description": "When it should come back, YYYY-MM-DD, or empty.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lent_to": {
+            "description": "Who has it on loan; empty when it is back.",
+            "maxLength": 80,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "low_stock": {
+            "description": "Remind when the quantity drops to this or below.",
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "photos": {
+            "description": "File ids of its photos, in order.",
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "purchase_date": {
+            "description": "YYYY-MM-DD, or empty.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity": {
+            "description": "How many there are. A new item has 1.",
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "receipts": {
+            "description": "File ids of receipts or warranty papers.",
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "remind_days": {
+            "description": "Days before the expiry to remind, instead of the household's lead.",
+            "maximum": 365,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "serial": {
+            "maxLength": 120,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tags": {
+            "description": "Words to find it by. Stored in lower case.",
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "unit": {
+            "description": "pcs, rolls, kg, ...",
+            "maxLength": 20,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "value": {
+            "description": "What one is worth, for the insurance list.",
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "household_id",
+          "item_id"
+        ],
+        "type": "object"
+      },
+      "name": "update_item",
+      "route": "POST /api/households/{household_id}/items/{item_id}",
+      "title": "Change an item"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Change a container"
+      },
+      "description": "Change a container's name, color, type, location, outer container, photos, notes, moving state, handling flags or destination. Only what you send changes.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "color": {
+            "description": "Its label color, #rrggbb, or empty.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "container_type": {
+            "description": "bin, box, drawer, shelf, bag, or anything else.",
+            "maxLength": 40,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "destination": {
+            "description": "For a move: the room it goes to.",
+            "maxLength": 80,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "flags": {
+            "description": "Handling notes printed on its label, such as fragile, this side up, heavy.",
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "label_id": {
+            "description": "The container's id, from list_labels, search_inventory or scan_code.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "location_id": {
+            "description": "Where it sits; 0 for nowhere.",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "move_status": {
+            "description": "For a move: packed, in_transit, unpacked, or empty.",
+            "enum": [
+              "",
+              "packed",
+              "in_transit",
+              "unpacked"
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "maxLength": 4000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parent_id": {
+            "description": "The container it sits inside; 0 for none.",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "photos": {
+            "description": "File ids of its photos, in order (see attach_photo).",
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "household_id",
+          "label_id"
+        ],
+        "type": "object"
+      },
+      "name": "update_label",
+      "route": "POST /api/households/{household_id}/labels/{label_id}",
+      "title": "Change a container"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "Rename or move a location"
+      },
+      "description": "Change a location's name, or move it inside another (0 for top-level). Only what you send changes.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "household_id": {
+            "description": "The household's id, from GET /api/households (list_households over MCP).",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "location_id": {
+            "description": "The location's id, from list_locations.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parent_id": {
+            "description": "Move it inside another location; 0 makes it top-level.",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "household_id",
+          "location_id"
+        ],
+        "type": "object"
+      },
+      "name": "update_location",
+      "route": "POST /api/households/{household_id}/locations/{location_id}",
+      "title": "Rename or move a location"
+    },
+    {
+      "adminOnly": false,
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "Who am I"
+      },
+      "description": "The account this API key belongs to, the role it acts with (role -- never higher than the key's own scope), and the account's own role.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "name": "whoami",
+      "route": "GET /api/me",
+      "title": "Who am I"
+    }
+  ],
+  "transport": "Streamable HTTP, stateless: one JSON-RPC message per POST, a JSON reply"
+}

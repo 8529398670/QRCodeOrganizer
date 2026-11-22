@@ -1,0 +1,11 @@
+# Written by the skill that scaffolded this app; `webserver-upgrade` reads and
+# updates it. Commit it: it is how an update knows where this app started.
+skill: go-webserver
+commit: 60335af96c7e019e0cda33ae52e8b68291d94531
+project_name: "QRCodeOrganizer"
+slug: qrcodeorganizer
+module_path: qrcodeorganizer
+port: 22935
+features: [files, api_keys, mcp, webhooks, invite_links, passwords, two_factor, backups]
+pruned: [metrics]
+tests: false
