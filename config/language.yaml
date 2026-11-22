@@ -15,6 +15,9 @@
 app:
   title: "QRCodeOrganizer"
   tagline: "Sign in with a login link."
+  # Shown to an account with the viewer role, above every screen.
+  view_only_badge: "View only"
+  view_only_body: "You can look at everything here, but not change anything."
 
 # The sidebar, one entry per signed-in screen. menu labels the header's
 # button that opens/collapses it.
@@ -475,6 +478,7 @@ admin:
   new_name_placeholder: "Their name"
   new_role_label: "Role"
   role_user: "user"
+  role_viewer: "viewer"
   role_admin: "admin"
   create_button: "Create login link"
   link_notice: "{summary}. Send it now: it is shown once and cannot be recovered, and any earlier link for this person has stopped working."
@@ -486,7 +490,11 @@ admin:
   table_actions: "Actions"
   status_active: "active"
   status_disabled: "disabled"
+  status_expired: "expired"
+  # {date} is when the account stops working.
+  expires_note: "Account expires {date}"
   two_factor_badge: "2FA"
+  service_badge: "Service"
   reissue_button: "New link"
   # The New link dialog: its heading, and the line under the choices.
   reissue_heading: "New login link for {name}"
@@ -501,11 +509,12 @@ admin:
   reset_two_factor_button: "Reset 2FA"
   # {name} is replaced with the account's display name.
   reset_two_factor_confirm: "Turn off two-factor sign-in for {name}? Do this only if you are sure it is them asking."
-  make_admin_button: "Make admin"
-  make_user_button: "Make user"
   make_admin_confirm: "Make {name} an admin? They can then manage accounts. This signs them out everywhere and stops their login link, so send them a new link. They can no longer sign in through an invite link."
   make_user_confirm: "Take admin rights from {name}? It applies at once. Their admin API keys drop to user level, and invite links they made stop working until they are an admin again."
   role_changed_toast: "{name} is now: {role}"
+  # The Role column's picker, and the question before a change.
+  role_picker_label: "Role of {name}"
+  make_viewer_confirm: "Make {name} a viewer? They can then look at everything they could before, but change nothing. It applies at once."
   disable_button: "Disable"
   # {name} is replaced with the account's display name. Empty this string to
   # stop asking for confirmation before disabling.
@@ -534,6 +543,7 @@ api_keys:
   name_placeholder: "Bot-1"
   role_label: "Permission"
   role_user: "user"
+  role_viewer: "viewer (reads only)"
   role_admin: "admin (can manage accounts)"
   # Under the description, with a link to the API reference: api.json in
   # app.repo, or this server's own copy.
@@ -691,6 +701,9 @@ invite_links:
   label_placeholder: "Group-1"
   uses_label: "Places"
   days_label: "Works for (days)"
+  role_label: "Joins as"
+  # On a link's row when its people join as viewers.
+  viewer_note: "joins as viewer"
   create_button: "Create invite link"
   link_notice: "Share this link with the group. It is shown once and cannot be recovered. Anyone holding it can join, so switch it off below if it goes somewhere it should not."
   copy_button: "Copy"
@@ -721,6 +734,19 @@ invite_links:
   revoke_confirm: "Switch off this link? Nobody can join or sign back in through it any more. Accounts it made keep working."
   delete_button: "Delete"
 
+portal:
+  heading: "ProjectPortal"
+  description: "Connect ProjectPortal through an account of its own, never yours. Its key may make keys for the accounts it runs, and never signs anyone in. Only you can change that account or cut it off."
+  name_label: "Account name"
+  days_label: "Key lifetime (days)"
+  connect_button: "Connect"
+  paste_hint: "Paste it into ProjectPortal: Catalog → this app → Admin key"
+  status_heading: "Its keys"
+  none: "Not connected."
+  expires: "Expires {date}"
+  never_expires: "Never expires"
+  disconnect_button: "Disconnect"
+  disconnect_confirm: "Disconnect ProjectPortal? Its keys stop working now, and so does every key and login link they made."
 admin_keys:
   heading: "All API keys"
   description: "Every key in this app and who owns it. Revoke or delete one to cut off whatever is using it, right away."
@@ -798,6 +824,7 @@ logs:
   table_ip: "IP"
   anonymous: "signed out"
   via_key: "(API key)"
+  via_named_key: "· key {name}"
 
 # The Jobs screen (owner only; static/js/jobs.js). A job you add can have a
 # name here, as job_<name> with dashes as underscores; one without shows its

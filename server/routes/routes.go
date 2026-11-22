@@ -55,6 +55,11 @@ type Handlers struct {
 	// Version is reported to MCP clients as serverInfo.version, and to the
 	// page on every API reply (X-App-Version) so it can notice an upgrade.
 	Version string
+	// Skill and SkillCommit are the webserver skill and its commit this app
+	// was scaffolded from (.skill-origin.yaml, stamped at build time), for
+	// /api/me. Empty when the build had no such file.
+	Skill       string
+	SkillCommit string
 	// LiveReload is set by main.go when server.live_reload says open pages
 	// hear about frontend changes. Nil, the route does not exist.
 	LiveReload *livereload.Watcher
@@ -148,6 +153,10 @@ func ( handlers *Handlers ) Register( app *fiber.App ) {
 	// every route below. See maintenance.go.
 	app.Use( handlers.Maintenance )
 
+	// A viewer reads and changes nothing: one rule for every route, so a
+	// route added later cannot forget it (security.ViewOnly).
+	app.Use( handlers.Guard.ViewOnly )
+
 	// The pages a login link and an invite link open. Opening one only shows
 	// a page; the link is spent by the POST that page sends when the person
 	// confirms. See auth.go and join.go.
@@ -181,7 +190,7 @@ func ( handlers *Handlers ) Register( app *fiber.App ) {
 
 	// Any other /api/ path is a JSON 404, not a static page.
 	app.Get( "/api/*" , func( c fiber.Ctx ) ( err error ) {
-		err = c.Status( fiber.StatusNotFound ).JSON( fiber.Map{ "error": "not found" } )
+		err = apidoc.Refuse( c , fiber.StatusNotFound , "not found" , "" )
 		return
 	} )
 
@@ -228,12 +237,12 @@ func ( handlers *Handlers ) RequireMCP( c fiber.Ctx ) ( err error ) {
 // notFound keeps an error body the shape every refusal has, so the frontend
 // has one shape to handle and no guard accidentally leaks internal detail.
 func notFound( c fiber.Ctx , message string ) ( err error ) {
-	err = c.Status( fiber.StatusNotFound ).JSON( fiber.Map{ "error": message } )
+	err = apidoc.Refuse( c , fiber.StatusNotFound , message , "" )
 	return
 }
 
 func forbidden( c fiber.Ctx , message string ) ( err error ) {
-	err = c.Status( fiber.StatusForbidden ).JSON( fiber.Map{ "error": message } )
+	err = apidoc.Refuse( c , fiber.StatusForbidden , message , "" )
 	return
 }
 
@@ -251,9 +260,9 @@ func restoreRefusal( cause error ) ( refused *refusal ) {
 	case errors.Is( cause , models.ErrAPIKeyLimit ):
 		refused = refuse( fiber.StatusConflict , "its owner already has the maximum number of live API keys" )
 	case errors.Is( cause , models.ErrOwnerProtected ):
-		refused = refuse( fiber.StatusForbidden , "nobody can restore the owner account's keys" )
+		refused = refuse( fiber.StatusForbidden , "nobody can restore the owner account's keys" ).coded( apidoc.CodeOwnerProtected )
 	case errors.Is( cause , models.ErrOwnerRequired ):
-		refused = refuse( fiber.StatusForbidden , "only the owner can restore an admin account's keys" )
+		refused = refuse( fiber.StatusForbidden , "only the owner can restore an admin account's keys" ).coded( apidoc.CodeOwnerRequired )
 	default:
 		refused = internalFailure( cause )
 	}
